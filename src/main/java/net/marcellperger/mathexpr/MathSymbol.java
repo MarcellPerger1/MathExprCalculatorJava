@@ -1,7 +1,7 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
 
-import net.marcellperger.first.util.Util;
+import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.Nullable;
 
 // TODO maybe make it required to have an entry in SymbolInfo

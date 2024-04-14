@@ -1,4 +1,4 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
 public enum GroupingDirection {
     LeftToRight,

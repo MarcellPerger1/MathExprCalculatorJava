@@ -1,4 +1,4 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
 import org.junit.jupiter.api.Test;
 

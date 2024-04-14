@@ -1,4 +1,4 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
 // I wish I could put these on 1 line like in Rust like
 // import org.jetbrains.annotations.{Contract, NotNull, Nullable}

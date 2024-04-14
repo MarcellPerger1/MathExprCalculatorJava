@@ -1,4 +1,4 @@
-package net.marcellperger.first.parser;
+package net.marcellperger.mathexpr.parser;
 
 public class ExprParseRtException extends RuntimeException {
     public ExprParseRtException() {

@@ -1,6 +1,6 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
-import net.marcellperger.first.util.Util;
+import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

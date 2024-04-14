@@ -1,8 +1,8 @@
-package net.marcellperger.first.parser;
+package net.marcellperger.mathexpr.parser;
 
-import net.marcellperger.first.*;
-import net.marcellperger.first.util.Util;
-import net.marcellperger.first.util.UtilCollectors;
+import net.marcellperger.mathexpr.*;
+import net.marcellperger.mathexpr.util.Util;
+import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 

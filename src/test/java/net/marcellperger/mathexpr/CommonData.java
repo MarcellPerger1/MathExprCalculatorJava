@@ -1,4 +1,4 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
 public class CommonData {
     private static MathSymbol getBigData1_obj() {

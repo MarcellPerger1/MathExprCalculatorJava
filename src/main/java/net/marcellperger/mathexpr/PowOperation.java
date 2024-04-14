@@ -1,4 +1,4 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
 public class PowOperation extends BinaryOperationLeftRight {
     public PowOperation(MathSymbol left_, MathSymbol right_) {

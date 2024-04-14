@@ -1,4 +1,4 @@
-package net.marcellperger.first.util;
+package net.marcellperger.mathexpr.util;
 
 
 /**

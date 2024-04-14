@@ -1,4 +1,4 @@
-package net.marcellperger.first;
+package net.marcellperger.mathexpr;
 
 public class MulOperation extends LTRBinaryOperationLeftRight {
     public MulOperation(MathSymbol left_, MathSymbol right_) {
