@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+@SuppressWarnings("unused")
 public class Util {
     protected Util() {}
 
@@ -125,6 +126,10 @@ public class Util {
     public static @NotNull NoSuchMethodError excToError(@NotNull NoSuchMethodException exc) {
         return withCause(new NoSuchMethodError(exc.getMessage()), exc.getCause());
     }
+    @Contract("_ -> new")
+    public static @NotNull NoSuchFieldError excToError(@NotNull NoSuchFieldException exc) {
+        return withCause(new NoSuchFieldError(exc.getMessage()), exc.getCause());
+    }
 
     @Contract("_ -> new")
     public static @NotNull UncheckedException intoUnchecked(Exception exc) {
@@ -150,5 +155,14 @@ public class Util {
     @Contract(value = "false, _, _ -> fail", pure = true)
     public static void realAssert(boolean b, String msg, Throwable cause) {
         if(!b) throw new AssertionError(msg, cause);
+    }
+
+    @Contract(value = "_, _ -> new", pure = true)
+    public static @NotNull <K, V> Map.Entry<K, V> makeEntryMut(K k, V v) {
+        return new AbstractMap.SimpleEntry<>(k, v);
+    }
+    @Contract(value = "_, _ -> new", pure = true)
+    public static @NotNull <K, V> Map.Entry<K, V> makeEntry(K k, V v) {
+        return new AbstractMap.SimpleImmutableEntry<>(k, v);
     }
 }
