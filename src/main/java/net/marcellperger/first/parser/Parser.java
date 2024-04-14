@@ -30,7 +30,10 @@ public class Parser {
     }
 
     public MathSymbol parse() throws ExprParseException {
-        return parseInfixPrecedenceLevel(2);  // TODO compute max prec level
+        MathSymbol sym = parseInfixPrecedenceLevel(2);  // TODO compute max prec level
+        discardWhitespace();
+        if(notEof()) throw new ExprParseException("Syntax error: didn't reach end of input");
+        return sym;
     }
 
     // https://regex101.com/r/2EogTA/1
