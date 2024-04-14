@@ -1,6 +1,7 @@
 package net.marcellperger.mathexpr.parser;
 
 
+@SuppressWarnings("unused")  // I want all the constructors
 public class ExprParseException extends Exception {
     public ExprParseException() {
         super();

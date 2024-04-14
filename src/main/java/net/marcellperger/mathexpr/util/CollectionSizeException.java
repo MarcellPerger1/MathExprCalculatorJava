@@ -1,5 +1,6 @@
 package net.marcellperger.mathexpr.util;
 
+@SuppressWarnings("unused")
 public class CollectionSizeException extends RuntimeException {
     public CollectionSizeException() {
     }
