@@ -162,17 +162,17 @@ public class CommonData {
         );
     }
 
-    public static Pair<MathSymbol, String> getBigData1_minimumParens() {
-        return new Pair<>(getBigData1_obj(), "(0.2 + 8.1) * (2.7 * -2.1 + 0.1) + (7.9 + -2.3 + (9.9 + 2.3 * -1.1 + 2.1))");
+    public static ObjStringPair getBigData1_minimumParens() {
+        return new ObjStringPair(getBigData1_obj(), "(0.2 + 8.1) * (2.7 * -2.1 + 0.1) + (7.9 + -2.3 + (9.9 + 2.3 * -1.1 + 2.1))");
     }
-    public static Pair<MathSymbol, String> getBigData1_groupingParens() {
-        return new Pair<>(getBigData1_obj(), "(0.2 + 8.1) * (2.7 * -2.1 + 0.1) + ((7.9 + -2.3) + ((9.9 + 2.3 * -1.1) + 2.1))");
+    public static ObjStringPair getBigData1_groupingParens() {
+        return new ObjStringPair(getBigData1_obj(), "(0.2 + 8.1) * (2.7 * -2.1 + 0.1) + ((7.9 + -2.3) + ((9.9 + 2.3 * -1.1) + 2.1))");
     }
 
-    public static Pair<MathSymbol, String> getBigData2_minimumParens() {
-        return new Pair<>(getBigData2_obj(), "(68.0 + 93.5 * -85.5 / 41.1 - (42.3 + 66.8) * ((77.8 / 45.3 + -10.7 * 65.6) / (0.4 + (84.5 + -31.1 / 90.6)))) / ((-37.6 + 59.5 * ((-80.9 - -72.2) * (84.1 - -68.0 / -67.8))) * ((-96.2 + -1.2) / (2.6 + 36.7) / 40.6 * -57.4))");
+    public static ObjStringPair getBigData2_minimumParens() {
+        return new ObjStringPair(getBigData2_obj(), "(68.0 + 93.5 * -85.5 / 41.1 - (42.3 + 66.8) * ((77.8 / 45.3 + -10.7 * 65.6) / (0.4 + (84.5 + -31.1 / 90.6)))) / ((-37.6 + 59.5 * ((-80.9 - -72.2) * (84.1 - -68.0 / -67.8))) * ((-96.2 + -1.2) / (2.6 + 36.7) / 40.6 * -57.4))");
     }
-     public static Pair<MathSymbol, String> getBigData2_groupingParens() {
-        return new Pair<>(getBigData2_obj(), "((68.0 + (93.5 * -85.5) / 41.1) - (42.3 + 66.8) * ((77.8 / 45.3 + -10.7 * 65.6) / (0.4 + (84.5 + -31.1 / 90.6)))) / ((-37.6 + 59.5 * ((-80.9 - -72.2) * (84.1 - -68.0 / -67.8))) * ((((-96.2 + -1.2) / (2.6 + 36.7)) / 40.6) * -57.4))");
+     public static ObjStringPair getBigData2_groupingParens() {
+        return new ObjStringPair(getBigData2_obj(), "((68.0 + (93.5 * -85.5) / 41.1) - (42.3 + 66.8) * ((77.8 / 45.3 + -10.7 * 65.6) / (0.4 + (84.5 + -31.1 / 90.6)))) / ((-37.6 + 59.5 * ((-80.9 - -72.2) * (84.1 - -68.0 / -67.8))) * ((((-96.2 + -1.2) / (2.6 + 36.7)) / 40.6) * -57.4))");
     }
 }

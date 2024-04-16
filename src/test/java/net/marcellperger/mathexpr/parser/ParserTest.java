@@ -25,8 +25,8 @@ class ParserTest {
         }
     }
 
-    void assertInfixParsesTo(Pair<MathSymbol, String> exprPair, int level) {
-        assertInfixParsesTo(exprPair.right(), level, exprPair.left());
+    void assertInfixParsesTo(ObjStringPair exprPair, int level) {
+        assertInfixParsesTo(exprPair.str(), level, exprPair.obj());
     }
 
     void assertParsesToInner(String src, MathSymbol expected) {
@@ -45,8 +45,8 @@ class ParserTest {
         }
     }
 
-    void assertParsesTo(Pair<MathSymbol, String> exprPair) {
-        assertParsesTo(exprPair.right(), exprPair.left());
+    void assertParsesTo(ObjStringPair exprPair) {
+        assertParsesTo(exprPair.str(), exprPair.obj());
     }
 
     void assertInfixParsesToInner(String src, int level, MathSymbol expected) {
