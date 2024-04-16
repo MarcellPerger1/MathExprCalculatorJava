@@ -32,6 +32,9 @@
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.2.5</version>
+                <configuration>
+                    <failIfNoTests>true</failIfNoTests>
+                </configuration>
 			</plugin>
 		</plugins>
 	</build>
