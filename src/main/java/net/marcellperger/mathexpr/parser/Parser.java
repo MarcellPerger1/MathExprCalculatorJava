@@ -176,21 +176,6 @@ public class Parser {
     }
     // endregion
 
-
-    /**
-     * Sorted List of the operators associated with each precedence;
-     * includes the precedence value itself for convenience
-     */
-    @SuppressWarnings("unused")  // We don't actually use this, but it's just too elegant to leave it out.
-    private static final
-    List<Entry<Integer, List<Class<? extends MathSymbol>>>>
-        SYMBOLS_BY_PRECEDENCE_ARR = Arrays.stream(SymbolInfo.values())
-        .collect(Collectors.groupingBy(s -> s.precedence))
-        .entrySet().stream()
-        .map(_valueTransformer(ent_arr -> ent_arr.stream().<Class<? extends MathSymbol>>map(s -> s.cls).toList()))
-        .sorted(Comparator.comparingInt(Entry::getKey)).toList();
-
-
     @Contract(pure = true)
     private static<K, V, R> @NotNull Function<Entry<K, V>, Entry<K, R>> _valueTransformer(Function<V, R> fn) {
         return e -> _makeEntry(e.getKey(), fn.apply(e.getValue()));
