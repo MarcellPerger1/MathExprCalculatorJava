@@ -30,7 +30,7 @@ public class Parser {
     }
 
     public MathSymbol parse() throws ExprParseException {
-        MathSymbol sym = parseInfixPrecedenceLevel(2);  // TODO compute max prec level
+        MathSymbol sym = parseInfixPrecedenceLevel(3);  // TODO compute max prec level
         discardWhitespace();
         if(notEof()) throw new ExprParseException("Syntax error: didn't reach end of input");
         return sym;
@@ -69,9 +69,10 @@ public class Parser {
         return parseDoubleLiteral_null();
     }
 
+    private static final int PREC_IN_PARENS = 3;  // TODO compute max prec level
     public @Nullable MathSymbol parseParens() throws ExprParseException {
         advanceExpectNext('(');
-        MathSymbol sym = parseInfixPrecedenceLevel(2);  // TODO use .parse() when it is completed
+        MathSymbol sym = parseInfixPrecedenceLevel(PREC_IN_PARENS);  // TODO use .parse() when it is completed
         advanceExpectNext(')');
         return sym;
     }
@@ -81,11 +82,12 @@ public class Parser {
         if(level == 0) {
             return parseParensOrLiteral();
         }
-
+        // TODO remove this next-line:
+        if(SymbolInfo.PREC_TO_INFO_MAP.get(level) == null) { return parseInfixPrecedenceLevel(level - 1); }
         Set<SymbolInfo> symbols = Util.requireNonEmptyNonNull(SymbolInfo.PREC_TO_INFO_MAP.get(level));
         @Nullable GroupingDirection dirn = symbols.stream()
             .map(sm -> sm.groupingDirection).distinct().collect(UtilCollectors.singleItem());
-        assert dirn == GroupingDirection.LeftToRight: "RTL/unknown operators not implemented yet";
+        assert dirn == GroupingDirection.LeftToRight: "RTL/unknown operators not implemented yet"; // TODO
         Map<String, SymbolInfo> infixToSymbolInfo = symbols.stream().collect(  // TODO pre-compute/cache these
             Collectors.toUnmodifiableMap(
                 si -> Objects.requireNonNull(si.infix, "null infix not allowed for parseInfixPrecedenceLevel"),

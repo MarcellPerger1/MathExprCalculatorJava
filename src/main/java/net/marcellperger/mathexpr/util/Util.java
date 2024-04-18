@@ -56,8 +56,8 @@ public class Util {
         return collection;
     }
     @SuppressWarnings("UnusedReturnValue")
-    @Contract("_ -> param1")
-    public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(@NotNull C collection) {
+    @Contract("null -> fail; _ -> param1")
+    public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection) {
         Objects.requireNonNull(collection);
         // IllegalArgumentException might not always be appropriate
         if(collection.isEmpty()) throw new IllegalArgumentException("Argument must not be empty");

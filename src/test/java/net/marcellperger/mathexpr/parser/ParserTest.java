@@ -15,6 +15,9 @@ import java.util.Map.Entry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
+    public static final int MUL_PREC = 2;
+    public static final int ADD_PREC = 3;
+
     boolean nocache = false;
 
     void assertInfixParsesTo(String src, int level, MathSymbol expected) {
@@ -60,27 +63,27 @@ class ParserTest {
 
     @Test
     void parseInfixPrecedenceLevel() {
-        assertInfixParsesTo("1.0/2.0", 1,
+        assertInfixParsesTo("1.0/2.0", MUL_PREC,
             new DivOperation(new BasicDoubleSymbol(1.0), new BasicDoubleSymbol(2.0)));
-        assertInfixParsesTo(".3*6.", 1,
+        assertInfixParsesTo(".3*6.", MUL_PREC,
             new MulOperation(new BasicDoubleSymbol(.3), new BasicDoubleSymbol(6.)));
-        assertInfixParsesTo("2.1*5.3+1.1", 2,
+        assertInfixParsesTo("2.1*5.3+1.1", ADD_PREC,
             new AddOperation(new MulOperation(new BasicDoubleSymbol(2.1), new BasicDoubleSymbol(5.3)), new BasicDoubleSymbol(1.1)));
-        assertInfixParsesTo("0.9-2.1/.3", 2,
+        assertInfixParsesTo("0.9-2.1/.3", ADD_PREC,
             new SubOperation(new BasicDoubleSymbol(0.9), new DivOperation(new BasicDoubleSymbol(2.1), new BasicDoubleSymbol(.3))));
-        assertInfixParsesTo("(2.2+1.1)+3.7", 2,
+        assertInfixParsesTo("(2.2+1.1)+3.7", ADD_PREC,
             new AddOperation(new AddOperation(new BasicDoubleSymbol(2.2), new BasicDoubleSymbol(1.1)), new BasicDoubleSymbol(3.7)));
-        assertInfixParsesTo(CommonData.getBigData1_groupingParens(), 2);
-        assertInfixParsesTo(CommonData.getBigData2_groupingParens(), 2);
-        assertInfixParsesTo("2.2+1.1+3.7", 2,
+        assertInfixParsesTo(CommonData.getBigData1_groupingParens(), ADD_PREC);
+        assertInfixParsesTo(CommonData.getBigData2_groupingParens(), ADD_PREC);
+        assertInfixParsesTo("2.2+1.1+3.7", ADD_PREC,
             new AddOperation(new AddOperation(new BasicDoubleSymbol(2.2), new BasicDoubleSymbol(1.1)), new BasicDoubleSymbol(3.7)));
-        assertInfixParsesTo("2.2+1.1+3.7+0.2", 2,
+        assertInfixParsesTo("2.2+1.1+3.7+0.2", ADD_PREC,
             new AddOperation(new AddOperation(new AddOperation(new BasicDoubleSymbol(2.2), new BasicDoubleSymbol(1.1)), new BasicDoubleSymbol(3.7)), new BasicDoubleSymbol(0.2)));
-        assertInfixParsesTo(CommonData.getBigData1_minimumParens(), 2);
-        assertInfixParsesTo(CommonData.getBigData2_minimumParens(), 2);
-        assertInfixParsesTo(".9/2./3.3", 1,
+        assertInfixParsesTo(CommonData.getBigData1_minimumParens(), ADD_PREC);
+        assertInfixParsesTo(CommonData.getBigData2_minimumParens(), ADD_PREC);
+        assertInfixParsesTo(".9/2./3.3", MUL_PREC,
             new DivOperation(new DivOperation(new BasicDoubleSymbol(.9), new BasicDoubleSymbol(2.)), new BasicDoubleSymbol(3.3)));
-        assertInfixParsesTo(".9/2./3.3", 2,
+        assertInfixParsesTo(".9/2./3.3", ADD_PREC,
             new DivOperation(new DivOperation(new BasicDoubleSymbol(.9), new BasicDoubleSymbol(2.)), new BasicDoubleSymbol(3.3)));
     }
 

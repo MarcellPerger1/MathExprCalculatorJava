@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 public enum SymbolInfo {
     // Let's say that precedence 0 is for (parens) OR literals - TODO add a class?? but it wouldn't actually be used !
     // POW(PowOperation.class, 1, GroupingDirection.RightToLeft, "**"),
-    MUL(MulOperation.class, 1, GroupingDirection.LeftToRight, "*", MulOperation::new),
-    DIV(DivOperation.class, 1, GroupingDirection.LeftToRight, "/", DivOperation::new),
+    MUL(MulOperation.class, 2, GroupingDirection.LeftToRight, "*", MulOperation::new),
+    DIV(DivOperation.class, 2, GroupingDirection.LeftToRight, "/", DivOperation::new),
 
-    ADD(AddOperation.class, 2, GroupingDirection.LeftToRight, "+", AddOperation::new),
-    SUB(SubOperation.class, 2, GroupingDirection.LeftToRight, "-", SubOperation::new),
+    ADD(AddOperation.class, 3, GroupingDirection.LeftToRight, "+", AddOperation::new),
+    SUB(SubOperation.class, 3, GroupingDirection.LeftToRight, "-", SubOperation::new),
     ;
 
     public static final Map<Class<? extends MathSymbol>, SymbolInfo> CLS_TO_INFO_MAP;
