@@ -1,6 +1,7 @@
 package net.marcellperger.mathexpr.parser;
 
 import net.marcellperger.mathexpr.*;
+import net.marcellperger.mathexpr.util.Pair;
 import net.marcellperger.mathexpr.util.Util;
 import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.NotNull;
@@ -8,11 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.nio.CharBuffer;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,7 +85,8 @@ public class Parser {
         Set<SymbolInfo> symbols = Util.requireNonEmptyNonNull(SymbolInfo.PREC_TO_INFO_MAP.get(level));
         @Nullable GroupingDirection dirn = symbols.stream()
             .map(sm -> sm.groupingDirection).distinct().collect(UtilCollectors.singleItem());
-        assert dirn == GroupingDirection.LeftToRight: "RTL/unknown operators not implemented yet"; // TODO
+        // if(dirn != GroupingDirection.LeftToRight) { return parseInfixPrecedenceLevel(level - 1); }  // TODO TDD: remove
+        // assert dirn == GroupingDirection.LeftToRight: "RTL/unknown operators not implemented yet"; // TODO
         Map<String, SymbolInfo> infixToSymbolInfo = symbols.stream().collect(  // TODO pre-compute/cache these
             Collectors.toUnmodifiableMap(
                 si -> Objects.requireNonNull(si.infix, "null infix not allowed for parseInfixPrecedenceLevel"),
@@ -97,6 +95,29 @@ public class Parser {
         MathSymbol left = parseInfixPrecedenceLevel(level - 1);
         String op;
 
+        if(dirn == GroupingDirection.RightToLeft) {
+            // TODO: refactor this mess - 2 separate loops?
+            //  I feel like it should be doable w/ one loop but that may involve risking NullPointerException
+            //  by setting some members of LeftRightBinaryOperation to null
+            List<Pair<SymbolInfo, MathSymbol>> otherOps = new ArrayList<>();
+            discardWhitespace();
+            while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
+                SymbolInfo opInfo = Objects.requireNonNull(infixToSymbolInfo.get(op));
+                MathSymbol right = parseInfixPrecedenceLevel(level - 1);
+                otherOps.add(new Pair<>(opInfo, right));
+                discardWhitespace();
+            }
+            if(otherOps.isEmpty()) return left;
+            SymbolInfo currOp = otherOps.getLast().left;
+            MathSymbol right = otherOps.removeLast().right;
+            while(!otherOps.isEmpty()) {
+                Pair<SymbolInfo, MathSymbol> currPair = otherOps.removeLast();
+                MathSymbol leftLocal = currPair.right;
+                right = currOp.getBiConstructor().construct(leftLocal, right);
+                currOp = currPair.left;
+            }
+            return currOp.getBiConstructor().construct(left, right);
+        }
         discardWhitespace();
         while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
             SymbolInfo opInfo = Objects.requireNonNull(infixToSymbolInfo.get(op));

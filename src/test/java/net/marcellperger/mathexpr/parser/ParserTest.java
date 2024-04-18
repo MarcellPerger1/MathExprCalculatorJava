@@ -4,6 +4,7 @@ import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Util;
 import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -11,12 +12,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
-    public static final int MUL_PREC = 2;
-    public static final int ADD_PREC = 3;
+    public static final int POW_PREC = SymbolInfo.POW.precedence;
+    public static final int MUL_PREC = SymbolInfo.MUL.precedence;
+    public static final int ADD_PREC = SymbolInfo.ADD.precedence;
 
     boolean nocache = false;
 
@@ -125,6 +128,16 @@ class ParserTest {
     }
 
     @Test
+    void parsePrecedenceLevel_pow() {
+        assertInfixParsesTo("1.2**9.1", POW_PREC,
+            new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)));
+        assertInfixParsesTo("1.2**9.1**.3", POW_PREC,
+            new PowOperation(new BasicDoubleSymbol(1.2), new PowOperation(new BasicDoubleSymbol(9.1), new BasicDoubleSymbol(.3))));
+        assertInfixParsesTo("1.2**9.1+.3", ADD_PREC,
+            new AddOperation(new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)), new BasicDoubleSymbol(.3)));
+    }
+
+    @Test
     void parsePrecedenceLevel_nocache() {
         boolean origNocache = nocache;
         nocache = true;
@@ -160,15 +173,15 @@ class ParserTest {
         }
 
 
-        Map<SymbolInfo, BinOpBiConstructor<?>> origCache = new HashMap<>();
+        Map<SymbolInfo, Optional<BinOpBiConstructor<?>>> origCache = new HashMap<>();
         void clearCache() {
             Field cacheField = getBiConstructorCache();
 
-            origCache = Arrays.stream(SymbolInfo.values()).<Entry<SymbolInfo, BinOpBiConstructor<?>>>map(sym -> {
+            origCache = Arrays.stream(SymbolInfo.values()).<Entry<SymbolInfo, Optional<BinOpBiConstructor<?>>>>map(sym -> {
                 try {
-                    BinOpBiConstructor<?> cachedValue = (BinOpBiConstructor<?>)cacheField.get(sym);
+                    @Nullable BinOpBiConstructor<?> cachedValue = (BinOpBiConstructor<?>)cacheField.get(sym);
                     cacheField.set(sym, null);
-                    return Util.makeEntry(sym, cachedValue);
+                    return Util.makeEntry(sym, Optional.ofNullable(cachedValue));
                 } catch (IllegalAccessException e) {
                     throw Util.excToError(e);
                 }
@@ -179,7 +192,7 @@ class ParserTest {
             Field cacheField = getBiConstructorCache();
             origCache.forEach((key, value) -> {
                 try {
-                    cacheField.set(key, value);
+                    cacheField.set(key, value.orElse(null));
                 } catch (IllegalAccessException ex) {
                     throw Util.excToError(ex);
                 }
