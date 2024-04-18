@@ -1,7 +1,6 @@
 package net.marcellperger.mathexpr;
 
 
-import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.Nullable;
 
 // TODO maybe make it required to have an entry in SymbolInfo
@@ -19,7 +18,7 @@ public interface MathSymbol {
      * just for a nicer syntax when we DO have an instance
      */
     default @Nullable Integer instPrecedenceInt() {
-        return Util.chainNulls(SymbolInfo.fromClass(this.getClass()), s -> s.precedence);
+        return SymbolInfo.precedenceFromClass(getClass());
     }
 
     default String fmtAlwaysParens() {
