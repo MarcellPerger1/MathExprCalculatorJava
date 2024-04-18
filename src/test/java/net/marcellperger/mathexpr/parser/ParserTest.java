@@ -135,16 +135,54 @@ class ParserTest {
             new PowOperation(new BasicDoubleSymbol(1.2), new PowOperation(new BasicDoubleSymbol(9.1), new BasicDoubleSymbol(.3))));
         assertInfixParsesTo("1.2**9.1+.3", ADD_PREC,
             new AddOperation(new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)), new BasicDoubleSymbol(.3)));
+        assertInfixParsesTo(CommonData.getBigData3Pow_minimumParens(), ADD_PREC);
+        assertInfixParsesTo(CommonData.getBigData3Pow_groupingParens(), ADD_PREC);
+    }
+
+    @Test
+    void parse_pow() {
+        assertParsesTo("1.2**9.1",
+            new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)));
+        assertParsesTo("1.2**9.1**.3",
+            new PowOperation(new BasicDoubleSymbol(1.2), new PowOperation(new BasicDoubleSymbol(9.1), new BasicDoubleSymbol(.3))));
+        assertParsesTo("1.2**9.1+.3",
+            new AddOperation(new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)), new BasicDoubleSymbol(.3)));
+        assertParsesTo(CommonData.getBigData3Pow_minimumParens());
+        assertParsesTo(CommonData.getBigData3Pow_groupingParens());
+    }
+
+    @Test  // TODO can we do parametrized tests?
+    void parsePrecedenceLevel_pow_nocache() {
+        try(var ignored = new WithNocache(this)) {
+            parsePrecedenceLevel_pow();
+        }
+    }
+
+    @Test  // TODO can we do parametrized tests?
+    void parse_pow_nocache() {
+        try(var ignored = new WithNocache(this)) {
+            parse_pow();
+        }
     }
 
     @Test
     void parsePrecedenceLevel_nocache() {
-        boolean origNocache = nocache;
-        nocache = true;
-        try {
+        try(var ignored = new WithNocache(this)) {
             parsePrecedenceLevel();
-        } finally {
-            nocache = origNocache;
+        }
+    }
+
+    static class WithNocache implements AutoCloseable {
+        boolean origNocache;
+        ParserTest inst;
+
+        WithNocache(ParserTest inst_) {
+            inst = inst_;
+            origNocache = inst.nocache;
+        }
+
+        public void close() {
+            inst.nocache = origNocache;
         }
     }
 

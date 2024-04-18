@@ -26,6 +26,7 @@ class MathSymbolTest {
             "(0.2 ** 5.5) ** 3.3"));
         assertExprFmt(new ObjStringPair(new PowOperation(new BasicDoubleSymbol(0.2), new PowOperation(new BasicDoubleSymbol(5.5), new BasicDoubleSymbol(3.3))),
             "0.2 ** 5.5 ** 3.3"));
+        assertExprFmt(CommonData.getBigData3Pow_minimumParens());
     }
 
     @Test
