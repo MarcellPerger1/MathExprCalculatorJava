@@ -3,15 +3,16 @@ package net.marcellperger.mathexpr.parser;
 import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Util;
 import net.marcellperger.mathexpr.util.UtilCollectors;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.nio.CharBuffer;
-import java.util.*;
-import java.util.AbstractMap.SimpleEntry;
-import java.util.Map.Entry;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -177,13 +178,4 @@ public class Parser {
             Arrays.stream(expected).sorted(Comparator.comparingInt(String::length).reversed()).toArray(String[]::new));
     }
     // endregion
-
-    @Contract(pure = true)
-    private static<K, V, R> @NotNull Function<Entry<K, V>, Entry<K, R>> _valueTransformer(Function<V, R> fn) {
-        return e -> _makeEntry(e.getKey(), fn.apply(e.getValue()));
-    }
-    @Contract(value = "_, _ -> new", pure = true)
-    private static @NotNull <K, V> Entry<K, V> _makeEntry(K k, V v) {
-        return new SimpleEntry<>(k, v);
-    }
 }
