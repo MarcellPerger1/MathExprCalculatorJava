@@ -11,7 +11,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,37 +25,14 @@ class ParserTest {
 
     void assertInfixParsesTo(String src, int level, MathSymbol expected) {
         // Expects it to be full parse
-        if (!nocache) assertInfixParsesToInner(src, level, expected);
-        else try (WithSuppressingCache ignored = WithSuppressingCache.start()) {
-            assertInfixParsesToInner(src, level, expected);
+        try (var ignored = applyNocacheAttr()) {
+            assertInfixParsesTo_inner(src, level, expected);
         }
     }
-
     void assertInfixParsesTo(ObjStringPair exprPair, int level) {
         assertInfixParsesTo(exprPair.str(), level, exprPair.obj());
     }
-
-    void assertParsesToInner(String src, MathSymbol expected) {
-        // Expects it to be full parse
-        Parser p = new Parser(src);
-        MathSymbol actual = assertDoesNotThrow(p::parse);
-        // No need to check EOF as parse() checks that it consumed the whole string
-        assertEquals(expected, actual);
-    }
-
-    void assertParsesTo(String src, MathSymbol expected) {
-        // Expects it to be full parse
-        if (!nocache) assertParsesToInner(src, expected);
-        else try (WithSuppressingCache ignored = WithSuppressingCache.start()) {
-            assertParsesToInner(src, expected);
-        }
-    }
-
-    void assertParsesTo(ObjStringPair exprPair) {
-        assertParsesTo(exprPair.str(), exprPair.obj());
-    }
-
-    void assertInfixParsesToInner(String src, int level, MathSymbol expected) {
+    void assertInfixParsesTo_inner(String src, int level, MathSymbol expected) {
         // Expects it to be full parse
         Parser p = new Parser(src);
         MathSymbol actual = assertDoesNotThrow(() -> p.parseInfixPrecedenceLevel(level));
@@ -65,10 +41,27 @@ class ParserTest {
         assertEquals(expected, actual);
     }
 
+    void assertParsesTo(String src, MathSymbol expected) {
+        // Expects it to be full parse
+        try (var ignored = applyNocacheAttr()) {
+            assertParsesTo_inner(src, expected);
+        }
+    }
+    void assertParsesTo(ObjStringPair exprPair) {
+        assertParsesTo(exprPair.str(), exprPair.obj());
+    }
+    void assertParsesTo_inner(String src, MathSymbol expected) {
+        // Expects it to be full parse
+        Parser p = new Parser(src);
+        MathSymbol actual = assertDoesNotThrow(p::parse);
+        // No need to check EOF as parse() checks that it consumed the whole string
+        assertEquals(expected, actual);
+    }
+
     @ParameterizedTest
     @ValueSource(booleans={true, false})
     void parseInfixPrecedenceLevel(boolean disableCache) {
-        try(var ignored = new WithNocache(this, disableCache).start()) {
+        try(var ignored = setNocacheAttr(disableCache)) {
             assertInfixParsesTo("1.0/2.0", MUL_PREC,
                 new DivOperation(new BasicDoubleSymbol(1.0), new BasicDoubleSymbol(2.0)));
             assertInfixParsesTo(".3*6.", MUL_PREC,
@@ -97,7 +90,7 @@ class ParserTest {
     @ParameterizedTest
     @ValueSource(booleans={true, false})
     void parse(boolean disableCache) {
-        try(var ignored = new WithNocache(this, disableCache).start()) {
+        try(var ignored = setNocacheAttr(disableCache)) {
             assertParsesTo("1.0/2.0",
                 new DivOperation(new BasicDoubleSymbol(1.0), new BasicDoubleSymbol(2.0)));
             assertParsesTo(".3*6.",
@@ -126,7 +119,7 @@ class ParserTest {
     @ParameterizedTest
     @ValueSource(booleans={true, false})
     void parsePrecedenceLevel_pow(boolean disableCache) {
-        try(var ignored = new WithNocache(this, disableCache)) {
+        try(var ignored = setNocacheAttr(disableCache)) {
             assertInfixParsesTo("1.2**9.1", POW_PREC,
                 new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)));
             assertInfixParsesTo("1.2**9.1**.3", POW_PREC,
@@ -141,7 +134,7 @@ class ParserTest {
     @ParameterizedTest
     @ValueSource(booleans={true, false})
     void parse_pow(boolean disableCache) {
-        try(var ignored = new WithNocache(this, disableCache).start()) {
+        try(var ignored = setNocacheAttr(disableCache)) {
             assertParsesTo("1.2**9.1",
                 new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)));
             assertParsesTo("1.2**9.1**.3",
@@ -153,23 +146,22 @@ class ParserTest {
         }
     }
 
+    protected WithNocache setNocacheAttr(boolean disableCache) {
+        return new WithNocache(this, disableCache);
+    }
+
     static class WithNocache implements AutoCloseable {
         boolean origNocache;
         boolean doDisable;
         ParserTest inst;
 
-        WithNocache(ParserTest inst_) {
+        public WithNocache(ParserTest inst_) {
             this(inst_, true);
         }
-        WithNocache(ParserTest inst_, boolean doDisable_) {
+        public WithNocache(ParserTest inst_, boolean doDisable_) {
             inst = inst_;
             doDisable = doDisable_;
-        }
-
-        @Contract("->this")
-        public WithNocache start() {
             _start();
-            return this;
         }
 
         private void _start() {
@@ -182,23 +174,28 @@ class ParserTest {
         }
     }
 
-    static class WithSuppressingCache implements AutoCloseable {
-        public static WithSuppressingCache getInstance() {
-            return INSTANCE;
-        }
-        protected static WithSuppressingCache INSTANCE = new WithSuppressingCache();
-        protected WithSuppressingCache() {}
+    protected WithSuppressingCache applyNocacheAttr() {
+        return WithSuppressingCache.start(nocache);
+    }
 
-        WithSuppressingCache startInstance() {
-            clearCache();
-            return this;
+    /**
+     *
+     * Public API:
+     * <ul>
+     *     <li>Create an instance and clear cache: {@link #start(boolean doStart)} / {@link #start()}</li>
+     *     <li>Restore the cache: {@link #close()}</li>
+     * </ul>
+     */
+    static class WithSuppressingCache implements AutoCloseable {
+        @Contract("_->new")
+        public static @NotNull WithSuppressingCache start(boolean doStart) {
+            WithSuppressingCache self = new WithSuppressingCache();
+            if(doStart) self.clearCache();
+            return self;
         }
-        static WithSuppressingCache start() {
-            return getInstance().startInstance();
-        }
-        WithSuppressingCache stop() {
-            restoreCache();
-            return this;
+        @Contract(" -> new")
+        public static @NotNull WithSuppressingCache start() {
+            return start(true);
         }
 
         @Override
@@ -206,9 +203,11 @@ class ParserTest {
             restoreCache();
         }
 
+        private WithSuppressingCache() {}
 
-        Map<SymbolInfo, Optional<BinOpBiConstructor<?>>> origCache = new HashMap<>();
-        void clearCache() {
+        private Map<SymbolInfo, Optional<BinOpBiConstructor<?>>> origCache = null;
+
+        protected void clearCache() {
             Field cacheField = getBiConstructorCache();
             origCache = Arrays.stream(SymbolInfo.values()).map(sym -> {
                 try {
@@ -221,7 +220,8 @@ class ParserTest {
             }).collect(UtilCollectors.entriesToUnmodifiableMap());
         }
 
-        void restoreCache() {
+        protected void restoreCache() {
+            if(origCache == null) return;  // didn't cache so nothing to restore
             Field cacheField = getBiConstructorCache();
             origCache.forEach((key, value) -> {
                 try {
