@@ -70,7 +70,6 @@ public enum SymbolInfo {
     private BinOpBiConstructor<?> biConstructorCache = null;
     public @NotNull BinOpBiConstructor<?> getBiConstructor() {
         if(biConstructorCache != null) return biConstructorCache;
-        // TODO could add a BiFunction<> arg to SymbolInfo(), then pass AddOperation::new etc.
         assert BinaryOperationLeftRight.class.isAssignableFrom(cls);
 
         Constructor<? extends BinaryOperationLeftRight> ctor;
