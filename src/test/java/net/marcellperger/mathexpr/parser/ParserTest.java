@@ -3,9 +3,13 @@ package net.marcellperger.mathexpr.parser;
 import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Util;
 import net.marcellperger.mathexpr.util.UtilCollectors;
+
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -127,7 +131,7 @@ class ParserTest {
             new DivOperation(new DivOperation(new BasicDoubleSymbol(.9), new BasicDoubleSymbol(2.)), new BasicDoubleSymbol(3.3)));
     }
 
-    @Test
+    @Test  // TODO make this not test/inline it
     void parsePrecedenceLevel_pow() {
         assertInfixParsesTo("1.2**9.1", POW_PREC,
             new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)));
@@ -151,34 +155,51 @@ class ParserTest {
         assertParsesTo(CommonData.getBigData3Pow_groupingParens());
     }
 
-    @Test  // TODO can we do parametrized tests?
-    void parsePrecedenceLevel_pow_nocache() {
-        try(var ignored = new WithNocache(this)) {
+    @ParameterizedTest
+    @ValueSource(booleans={true, false})
+    void parsePrecedenceLevel_pow_nocache(boolean disableCache) {
+        try(var ignored = new WithNocache(this, disableCache)) {
             parsePrecedenceLevel_pow();
         }
     }
 
-    @Test  // TODO can we do parametrized tests?
-    void parse_pow_nocache() {
-        try(var ignored = new WithNocache(this)) {
+    // TODO do more parameterized tests
+    @ParameterizedTest
+    @ValueSource(booleans={true, false})
+    void parse_pow_nocache(boolean disableCache) {
+        try(var ignored = new WithNocache(this, disableCache)) {
             parse_pow();
         }
     }
 
-    @Test
-    void parsePrecedenceLevel_nocache() {
-        try(var ignored = new WithNocache(this)) {
+    @ParameterizedTest
+    @ValueSource(booleans={true, false})
+    void parsePrecedenceLevel_nocache(boolean disableCache) {
+        try(var ignored = new WithNocache(this, disableCache)) {
             parsePrecedenceLevel();
         }
     }
 
     static class WithNocache implements AutoCloseable {
         boolean origNocache;
+        boolean doDisable;
         ParserTest inst;
 
         WithNocache(ParserTest inst_) {
             inst = inst_;
+            start();
+        }
+        WithNocache(ParserTest inst_, boolean doDisable_) {
+            inst = inst_;
+            doDisable = doDisable_;
+            start();
+        }
+        
+        @Contract("->this")
+        public WithNocache start() {
             origNocache = inst.nocache;
+            inst.nocache = doDisable;
+            return this;
         }
 
         public void close() {
