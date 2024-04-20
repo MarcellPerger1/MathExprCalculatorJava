@@ -27,10 +27,14 @@ public class Parser {
     }
 
     public MathSymbol parse() throws ExprParseException {
-        MathSymbol sym = parseInfixPrecedenceLevel(3);  // TODO compute max prec level
+        MathSymbol sym = parseExpr();
         discardWhitespace();
         if(notEof()) throw new ExprParseException("Syntax error: didn't reach end of input");
         return sym;
+    }
+
+    public MathSymbol parseExpr() throws ExprParseException {
+        return parseInfixPrecedenceLevel(SymbolInfo.MAX_PRECEDENCE);
     }
 
     // https://regex101.com/r/2EogTA/1
@@ -66,10 +70,9 @@ public class Parser {
         return parseDoubleLiteral_null();
     }
 
-    private static final int PREC_IN_PARENS = 3;  // TODO compute max prec level
     public @Nullable MathSymbol parseParens() throws ExprParseException {
         advanceExpectNext('(');
-        MathSymbol sym = parseInfixPrecedenceLevel(PREC_IN_PARENS);  // TODO use .parse() when it is completed
+        MathSymbol sym = parseExpr();
         advanceExpectNext(')');
         return sym;
     }

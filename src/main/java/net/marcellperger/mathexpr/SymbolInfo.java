@@ -29,6 +29,7 @@ public enum SymbolInfo {
     public static final Map<Class<? extends MathSymbol>, SymbolInfo> CLS_TO_INFO_MAP;
     public static final Map<Integer, Set<SymbolInfo>> PREC_TO_INFO_MAP;
     public static final List<Entry<Integer, Set<SymbolInfo>>> PREC_SORTED_INFO;
+    public static final int MAX_PRECEDENCE;
 
     public final int precedence;  // TODO make this Integer
     public final Class<? extends MathSymbol> cls;
@@ -103,5 +104,6 @@ public enum SymbolInfo {
         CLS_TO_INFO_MAP = Arrays.stream(values()).collect(Collectors.toUnmodifiableMap(p -> p.cls, p -> p));
         PREC_TO_INFO_MAP = Arrays.stream(values()).collect(Collectors.groupingBy(s -> s.precedence, Collectors.toUnmodifiableSet()));
         PREC_SORTED_INFO = PREC_TO_INFO_MAP.entrySet().stream().sorted(Comparator.comparingInt(Entry::getKey)).toList();
+        MAX_PRECEDENCE = PREC_SORTED_INFO.getLast().getKey();
     }
 }
