@@ -2,7 +2,6 @@ package net.marcellperger.mathexpr.parser;
 
 import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Pair;
-import net.marcellperger.mathexpr.util.Util;
 import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
