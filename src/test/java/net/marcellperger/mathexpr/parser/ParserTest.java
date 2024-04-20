@@ -6,6 +6,7 @@ import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -36,7 +37,8 @@ class ParserTest {
         // Expects it to be full parse
         Parser p = new Parser(src);
         MathSymbol actual = assertDoesNotThrow(() -> p.parseInfixPrecedenceLevel(level));
-        assertEquals(src.substring(0, p.idx), src, "Didn't fully parse the string");  // = isEof() but better msg
+        assertEquals('"' + src + '"', '"' + src.substring(0, p.idx) + '"',
+            "Didn't fully parse the string");  // = isEof() but better msg
         assertTrue(p.isEof());
         assertEquals(expected, actual);
     }
@@ -143,6 +145,21 @@ class ParserTest {
                 new AddOperation(new PowOperation(new BasicDoubleSymbol(1.2), new BasicDoubleSymbol(9.1)), new BasicDoubleSymbol(.3)));
             assertParsesTo(CommonData.getBigData3Pow_minimumParens());
             assertParsesTo(CommonData.getBigData3Pow_groupingParens());
+        }
+    }
+
+
+    @Disabled("[SKIP] Failing, will fix in a later PR")
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void parensWhitespaceBug(boolean disableCache) {
+        try(var ignored = setNocacheAttr(disableCache)) {
+            // These 3 are fine
+            assertInfixParsesTo("( 1.2 )", MUL_PREC, new BasicDoubleSymbol(1.2));
+            assertParsesTo("( 1.2 )", new BasicDoubleSymbol(1.2));
+            assertParsesTo("  1.2  ", new BasicDoubleSymbol(1.2));
+            // This is not - could be a bug in the future
+            assertInfixParsesTo("  1.2  ", 0, new BasicDoubleSymbol(1.2));
         }
     }
 
