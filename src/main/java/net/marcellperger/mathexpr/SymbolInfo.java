@@ -46,7 +46,7 @@ public enum SymbolInfo {
     }
     SymbolInfo(Class<? extends BinaryOperationLeftRight> cls, int precedence,
                GroupingDirection groupingDirection, @Nullable String infix,
-               BinOpBiConstructor<?> biConstructor) {
+               BinOpBiConstructor biConstructor) {
         this.precedence = precedence;
         this.cls = cls;  // TODO: private + getters?
         this.groupingDirection = groupingDirection;
@@ -69,8 +69,8 @@ public enum SymbolInfo {
         return Util.chainNulls(fromClass(cls), x -> x.infix);
     }
 
-    private BinOpBiConstructor<?> biConstructorCache = null;
-    public @NotNull BinOpBiConstructor<?> getBiConstructor() {
+    private BinOpBiConstructor biConstructorCache = null;
+    public @NotNull BinOpBiConstructor getBiConstructor() {
         if(biConstructorCache != null) return biConstructorCache;
         assert BinaryOperationLeftRight.class.isAssignableFrom(cls);
 

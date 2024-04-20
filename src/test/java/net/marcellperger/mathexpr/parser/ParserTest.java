@@ -216,15 +216,15 @@ class ParserTest {
         // region implementation details (ctor, clearCache, restoreCache
         private WithSuppressingCache() {}
 
-        private Map<SymbolInfo, Optional<BinOpBiConstructor<?>>> origCache = null;
+        private Map<SymbolInfo, Optional<BinOpBiConstructor>> origCache = null;
 
         protected void clearCache() {
             Field cacheField = getBiConstructorCache();
             origCache = Arrays.stream(SymbolInfo.values()).map(sym -> {
                 try {
-                    @Nullable BinOpBiConstructor<?> cachedValue = (BinOpBiConstructor<?>)cacheField.get(sym);
+                    @Nullable BinOpBiConstructor cachedValue = (BinOpBiConstructor)cacheField.get(sym);
                     cacheField.set(sym, null);
-                    return Util.makeEntry(sym, Optional.<BinOpBiConstructor<?>>ofNullable(cachedValue));
+                    return Util.makeEntry(sym, Optional.ofNullable(cachedValue));
                 } catch (IllegalAccessException e) {
                     throw Util.excToError(e);
                 }

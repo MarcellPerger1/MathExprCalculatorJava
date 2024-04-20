@@ -112,13 +112,13 @@ public class Parser {
             return otherOps.reversed().stream().reduce((rightpair, leftpair) ->
                 leftpair.asVars((preOp, argL) ->
                     new Pair<>(preOp, rightpair.asVars((midOp, argR) -> midOp.getBiConstructor().construct(argL, argR))))
-            ).map(p -> p.<MathSymbol>asVars((midOp, argR) -> midOp.getBiConstructor().construct(javaIsAnIdiot_left, argR))).orElse(left);
+            ).map(p -> p.asVars((midOp, argR) -> midOp.getBiConstructor().construct(javaIsAnIdiot_left, argR))).orElse(left);
         }
         discardWhitespace();
         while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
             SymbolInfo opInfo = Objects.requireNonNull(infixToSymbolInfo.get(op));
             MathSymbol right = parseInfixPrecedenceLevel(level - 1);
-            BinOpBiConstructor<?> ctor = opInfo.getBiConstructor();
+            BinOpBiConstructor ctor = opInfo.getBiConstructor();
             left = ctor.construct(left, right);
             discardWhitespace();
         }
