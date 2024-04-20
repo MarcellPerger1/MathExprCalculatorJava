@@ -175,4 +175,8 @@ public class Util {
         if(c.size() != 1) throw new CollectionSizeException("Expected collection to have 1 item");
         return c.getFirst();
     }
+
+    public static <K, V> @NotNull V getNotNull(@NotNull Map<K, V> map, K key) {
+        return Objects.requireNonNull(map.get(key));
+    }
 }

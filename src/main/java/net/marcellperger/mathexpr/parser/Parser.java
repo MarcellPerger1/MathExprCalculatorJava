@@ -2,6 +2,7 @@ package net.marcellperger.mathexpr.parser;
 
 import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Pair;
+import net.marcellperger.mathexpr.util.Util;
 import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 
 
 public class Parser {
@@ -92,38 +92,42 @@ public class Parser {
                 Function.identity()));
         String[] infixesToFind = sortedByLength(infixToSymbolInfo.keySet().toArray(String[]::new));
         MathSymbol left = parseInfixPrecedenceLevel(level - 1);
-        String op;
-
         if(dirn == GroupingDirection.RightToLeft) {
-            // TODO: refactor this mess - 2 separate loops?
-            //  I feel like it should be doable w/ one loop but that may involve risking NullPointerException
-            //  by setting some members of LeftRightBinaryOperation to null
-            //  Actually, this first loop could be common between them if we make the other path 2 loops as well
-            List<Pair<SymbolInfo, MathSymbol>> otherOps = new ArrayList<>();
-            discardWhitespace();
-            while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
-                SymbolInfo opInfo = Objects.requireNonNull(infixToSymbolInfo.get(op));
-                MathSymbol sym = parseInfixPrecedenceLevel(level - 1);
-                otherOps.add(new Pair<>(opInfo, sym));
-                discardWhitespace();
-            }
-            if(otherOps.isEmpty()) return left;
-            MathSymbol javaIsAnIdiot_left = left;
-            return otherOps.reversed().stream().reduce((rightpair, leftpair) ->
-                leftpair.asVars((preOp, argL) ->
-                    new Pair<>(preOp, rightpair.asVars((midOp, argR) -> midOp.getBiConstructor().construct(argL, argR))))
-            ).map(p -> p.asVars((midOp, argR) -> midOp.getBiConstructor().construct(javaIsAnIdiot_left, argR))).orElse(left);
+            return parseInfixPrecedenceLevel_RTL(left, level, infixesToFind, infixToSymbolInfo);
         }
+        return parseInfixPrecedenceLevel_LTR(left, level, infixesToFind, infixToSymbolInfo);
+        // TODO what if dirn == null? Maybe just disallow the ambiguous case of > 2 operands in same level
+    }
+
+    private MathSymbol parseInfixPrecedenceLevel_RTL(MathSymbol left, int level, String[] infixesToFind,
+                                                     Map<String, SymbolInfo> infixToSymbolInfo) throws ExprParseException {
+        // TODO: refactor this mess - 2 separate loops?
+        //  I feel like it should be doable w/ one loop but that may involve risking NullPointerException
+        //  by setting some members of LeftRightBinaryOperation to null
+        //  Actually, this first loop could be common between them if we make the other path 2 loops as well
+        String op;
+        List<Pair<SymbolInfo, MathSymbol>> otherOps = new ArrayList<>();
         discardWhitespace();
         while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
-            SymbolInfo opInfo = Objects.requireNonNull(infixToSymbolInfo.get(op));
-            MathSymbol right = parseInfixPrecedenceLevel(level - 1);
-            BinOpBiConstructor ctor = opInfo.getBiConstructor();
-            left = ctor.construct(left, right);
+            otherOps.add(new Pair<>(Util.getNotNull(infixToSymbolInfo, op), parseInfixPrecedenceLevel(level - 1)));
+            discardWhitespace();
+        }
+        return otherOps.reversed().stream().reduce((rightpair, leftpair) ->
+            leftpair.asVars((preOp, argL) ->
+                new Pair<>(preOp, rightpair.asVars((midOp, argR) -> midOp.getBiConstructor().construct(argL, argR))))
+        ).map(p -> p.asVars((midOp, argR) -> midOp.getBiConstructor().construct(left, argR))).orElse(left);
+    }
+
+    private MathSymbol parseInfixPrecedenceLevel_LTR(MathSymbol left, int level, String[] infixesToFind,
+                                                     Map<String, SymbolInfo> infixToSymbolInfo) throws ExprParseException {
+        String op;
+        discardWhitespace();
+        while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
+            left = Util.getNotNull(infixToSymbolInfo, op).getBiConstructor()
+                .construct(left, parseInfixPrecedenceLevel(level - 1));
             discardWhitespace();
         }
         return left;
-        // TODO what if dirn == null? Maybe just disallow the ambiguous case of > 2 operands in same level
     }
 
     // region utils
