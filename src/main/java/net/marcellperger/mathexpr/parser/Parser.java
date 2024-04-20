@@ -85,8 +85,6 @@ public class Parser {
         Set<SymbolInfo> symbols = Util.requireNonEmptyNonNull(SymbolInfo.PREC_TO_INFO_MAP.get(level));
         @Nullable GroupingDirection dirn = symbols.stream()
             .map(sm -> sm.groupingDirection).distinct().collect(UtilCollectors.singleItem());
-        // if(dirn != GroupingDirection.LeftToRight) { return parseInfixPrecedenceLevel(level - 1); }  // TODO TDD: remove
-        // assert dirn == GroupingDirection.LeftToRight: "RTL/unknown operators not implemented yet"; // TODO
         Map<String, SymbolInfo> infixToSymbolInfo = symbols.stream().collect(  // TODO pre-compute/cache these
             Collectors.toUnmodifiableMap(
                 si -> Objects.requireNonNull(si.infix, "null infix not allowed for parseInfixPrecedenceLevel"),

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public enum SymbolInfo {
     // Let's say that precedence 0 is for (parens) OR literals - TODO add a class?? but it wouldn't actually be used !
-    POW(PowOperation.class, 1, GroupingDirection.RightToLeft, "**"),  // TODO PowOperation::new
+    POW(PowOperation.class, 1, GroupingDirection.RightToLeft, "**", PowOperation::new),
     MUL(MulOperation.class, 2, GroupingDirection.LeftToRight, "*", MulOperation::new),
     DIV(DivOperation.class, 2, GroupingDirection.LeftToRight, "/", DivOperation::new),
 
