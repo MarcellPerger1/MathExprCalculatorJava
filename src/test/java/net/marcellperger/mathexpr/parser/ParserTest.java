@@ -148,7 +148,6 @@ class ParserTest {
         }
     }
 
-
     @Disabled("[SKIP] Failing, will fix in a later PR")
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
@@ -195,14 +194,6 @@ class ParserTest {
         return WithSuppressingCache.start(nocache);
     }
 
-    /**
-     *
-     * Public API:
-     * <ul>
-     *     <li>Create an instance and clear cache: {@link #start(boolean doStart)} / {@link #start()}</li>
-     *     <li>Restore the cache: {@link #close()}</li>
-     * </ul>
-     */
     static class WithSuppressingCache implements AutoCloseable {
         @Contract("_->new")
         public static @NotNull WithSuppressingCache start(boolean doStart) {
@@ -220,6 +211,7 @@ class ParserTest {
             restoreCache();
         }
 
+        // region implementation details (ctor, clearCache, restoreCache
         private WithSuppressingCache() {}
 
         private Map<SymbolInfo, Optional<BinOpBiConstructor<?>>> origCache = null;
@@ -260,5 +252,6 @@ class ParserTest {
             cacheField.setAccessible(true);
             return cacheField;
         }
+        // endregion
     }
 }
