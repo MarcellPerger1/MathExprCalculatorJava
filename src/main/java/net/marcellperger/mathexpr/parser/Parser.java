@@ -98,24 +98,21 @@ public class Parser {
             // TODO: refactor this mess - 2 separate loops?
             //  I feel like it should be doable w/ one loop but that may involve risking NullPointerException
             //  by setting some members of LeftRightBinaryOperation to null
+            //  Actually, this first loop could be common between them if we make the other path 2 loops as well
             List<Pair<SymbolInfo, MathSymbol>> otherOps = new ArrayList<>();
             discardWhitespace();
             while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
                 SymbolInfo opInfo = Objects.requireNonNull(infixToSymbolInfo.get(op));
-                MathSymbol right = parseInfixPrecedenceLevel(level - 1);
-                otherOps.add(new Pair<>(opInfo, right));
+                MathSymbol sym = parseInfixPrecedenceLevel(level - 1);
+                otherOps.add(new Pair<>(opInfo, sym));
                 discardWhitespace();
             }
             if(otherOps.isEmpty()) return left;
-            SymbolInfo currOp = otherOps.getLast().left;
-            MathSymbol right = otherOps.removeLast().right;
-            while(!otherOps.isEmpty()) {
-                Pair<SymbolInfo, MathSymbol> currPair = otherOps.removeLast();
-                MathSymbol leftLocal = currPair.right;
-                right = currOp.getBiConstructor().construct(leftLocal, right);
-                currOp = currPair.left;
-            }
-            return currOp.getBiConstructor().construct(left, right);
+            MathSymbol javaIsAnIdiot_left = left;
+            return otherOps.reversed().stream().reduce((rightpair, leftpair) ->
+                leftpair.asVars((preOp, argL) ->
+                    new Pair<>(preOp, rightpair.asVars((midOp, argR) -> midOp.getBiConstructor().construct(argL, argR))))
+            ).map(p -> p.<MathSymbol>asVars((midOp, argR) -> midOp.getBiConstructor().construct(javaIsAnIdiot_left, argR))).orElse(left);
         }
         discardWhitespace();
         while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
