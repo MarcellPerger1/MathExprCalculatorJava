@@ -90,7 +90,7 @@ public class Parser {
             Collectors.toUnmodifiableMap(
                 si -> Objects.requireNonNull(si.infix, "null infix not allowed for parseInfixPrecedenceLevel"),
                 Function.identity()));
-        String[] infixesToFind = sortByLength(infixToSymbolInfo.keySet().toArray(String[]::new));
+        String[] infixesToFind = sortedByLength(infixToSymbolInfo.keySet().toArray(String[]::new));
         MathSymbol left = parseInfixPrecedenceLevel(level - 1);
         String op;
 
@@ -181,21 +181,26 @@ public class Parser {
         return src.startsWith(expected, /*start*/idx);
     }
     
-    private @NotNull String @NotNull [] sortByLength(@NotNull String @NotNull[] arr) {
+    private @NotNull String @NotNull [] sortedByLength(@NotNull String @NotNull[] arr) {
         return Arrays.stream(arr).sorted(Comparator.comparingInt(String::length).reversed()).toArray(String[]::new);
     }
     private @Nullable String matchesNextAny_optionsSorted(@NotNull String... expected) {
         return Arrays.stream(expected).filter(this::matchesNext).findFirst().orElse(null);
     }
     private @Nullable String discardMatchesNextAny_optionsSorted(@NotNull String... expected) {
-        String s = Arrays.stream(expected).filter(this::matchesNext).findFirst().orElse(null);
+        String s = matchesNextAny_optionsSorted(expected);
         if(s != null) discardN(s.length());
         return s;
     }
+    @SuppressWarnings("unused")
     protected @Nullable String matchesNextAny(@NotNull String... expected) {
         // Try to longer ones first, then shorter ones.
-        return matchesNextAny_optionsSorted(
-            Arrays.stream(expected).sorted(Comparator.comparingInt(String::length).reversed()).toArray(String[]::new));
+        return matchesNextAny_optionsSorted(sortedByLength(expected));
+    }
+    @SuppressWarnings("unused")
+    protected @Nullable String discardMatchesNextAny(@NotNull String... expected) {
+        // Try to longer ones first, then shorter ones.
+        return discardMatchesNextAny_optionsSorted(sortedByLength(expected));
     }
     // endregion
 }

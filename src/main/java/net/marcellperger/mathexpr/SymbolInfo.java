@@ -36,6 +36,7 @@ public enum SymbolInfo {
     public final GroupingDirection groupingDirection;
     public final String infix;
 
+    @SuppressWarnings("unused")  // useful later
     SymbolInfo(Class<? extends MathSymbol> cls, int precedence,
                GroupingDirection groupingDirection, @Nullable String infix) {
         this.precedence = precedence;

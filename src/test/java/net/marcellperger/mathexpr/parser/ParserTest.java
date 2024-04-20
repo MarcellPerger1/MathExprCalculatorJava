@@ -30,7 +30,7 @@ class ParserTest {
             assertInfixParsesTo_inner(src, level, expected);
         }
     }
-    void assertInfixParsesTo(ObjStringPair exprPair, int level) {
+    void assertInfixParsesTo(ObjStringPair exprPair, @SuppressWarnings("SameParameterValue") int level) {
         assertInfixParsesTo(exprPair.str(), level, exprPair.obj());
     }
     void assertInfixParsesTo_inner(String src, int level, MathSymbol expected) {
@@ -171,6 +171,7 @@ class ParserTest {
         boolean doDisable;
         ParserTest inst;
 
+        @SuppressWarnings("unused")
         public WithNocache(ParserTest inst_) {
             this(inst_, true);
         }
@@ -201,6 +202,7 @@ class ParserTest {
             if(doStart) self.clearCache();
             return self;
         }
+        @SuppressWarnings("unused")
         @Contract(" -> new")
         public static @NotNull WithSuppressingCache start() {
             return start(true);
