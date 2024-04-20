@@ -80,11 +80,10 @@ public class Parser {
         if(level == 0) {
             return parseParensOrLiteral();
         }
-        // TODO remove this next-line:
-        if(SymbolInfo.PREC_TO_INFO_MAP.get(level) == null) { return parseInfixPrecedenceLevel(level - 1); }
-        Set<SymbolInfo> symbols = Util.requireNonEmptyNonNull(SymbolInfo.PREC_TO_INFO_MAP.get(level));
+        Set<SymbolInfo> symbols = SymbolInfo.PREC_TO_INFO_MAP.get(level);
+        if(symbols == null || symbols.isEmpty()) return parseInfixPrecedenceLevel(level - 1);
         @Nullable GroupingDirection dirn = symbols.stream()
-            .map(sm -> sm.groupingDirection).distinct().collect(UtilCollectors.singleItem());
+            .map(sm -> sm.groupingDirection).collect(UtilCollectors.singleDistinctItem());
         Map<String, SymbolInfo> infixToSymbolInfo = symbols.stream().collect(  // TODO pre-compute/cache these
             Collectors.toUnmodifiableMap(
                 si -> Objects.requireNonNull(si.infix, "null infix not allowed for parseInfixPrecedenceLevel"),

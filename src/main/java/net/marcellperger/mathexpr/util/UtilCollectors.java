@@ -14,11 +14,10 @@ public class UtilCollectors {
 
     @Contract(" -> new")
     public static <T> @NotNull Collector<T, ?, T> singleItem() {
-        return Collectors.collectingAndThen(
-            Collectors.toList(),
-            items -> Util.expectOrFail(items, items.size() == 1,
-                new CollectionSizeException("UtilCollectors.singleItem expected a single item")).getFirst()
-        );
+        return Collectors.collectingAndThen(Collectors.toList(), Util::getOnlyItem);
+    }
+    public static <T> @NotNull Collector<T, ?, T> singleDistinctItem() {
+        return Collectors.collectingAndThen(Collectors.toSet(), Util::getOnlyItem);
     }
 
     public static <K, V> @NotNull Collector<Entry<K, V>, ?, Map<K, V>> entriesToUnmodifiableMap() {

@@ -1,16 +1,15 @@
 package net.marcellperger.mathexpr.util;
 
 
+import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 @SuppressWarnings("unused")
 public class Util {
@@ -167,5 +166,14 @@ public class Util {
     @Contract(value = "_, _ -> new", pure = true)
     public static @NotNull <K, V> Map.Entry<K, V> makeEntry(K k, V v) {
         return new AbstractMap.SimpleImmutableEntry<>(k, v);
+    }
+
+    public static<T> T getOnlyItem(@Flow(sourceIsContainer = true) @NotNull Collection<T> c) {
+        if(c.size() != 1) throw new CollectionSizeException("Expected collection to have 1 item");
+        return c.iterator().next();
+    }
+    public static<T> T getOnlyItem(@Flow(sourceIsContainer = true) @NotNull SequencedCollection<T> c) {
+        if(c.size() != 1) throw new CollectionSizeException("Expected collection to have 1 item");
+        return c.getFirst();
     }
 }
