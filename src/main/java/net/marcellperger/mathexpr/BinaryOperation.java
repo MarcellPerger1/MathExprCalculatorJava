@@ -8,4 +8,8 @@ public interface BinaryOperation extends MathSymbol {
     default String fmt() {
         return "%s(%s, %s)".formatted(this.getClass().getSimpleName(), getLeft().fmt(), getRight().fmt());
     }
+
+    static MathSymbol construct(MathSymbol left, SymbolInfo op, MathSymbol right) {
+        return op.getBiConstructor().construct(left, right);
+    }
 }

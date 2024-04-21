@@ -3,17 +3,17 @@ package net.marcellperger.mathexpr.parser;
 import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Pair;
 import net.marcellperger.mathexpr.util.Util;
-import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
 import java.nio.CharBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 
 public class Parser {
@@ -79,52 +79,39 @@ public class Parser {
 
     public MathSymbol parseInfixPrecedenceLevel(int level) throws ExprParseException {
         discardWhitespace();
-        if(level == 0) {
-            return parseParensOrLiteral();
-        }
-        Set<SymbolInfo> symbols = SymbolInfo.PREC_TO_INFO_MAP.get(level);
-        if(symbols == null || symbols.isEmpty()) return parseInfixPrecedenceLevel(level - 1);
-        @Nullable GroupingDirection dirn = symbols.stream()
-            .map(sm -> sm.groupingDirection).collect(UtilCollectors.singleDistinctItem());
-        Map<String, SymbolInfo> infixToSymbolInfo = symbols.stream().collect(  // TODO pre-compute/cache these
-            Collectors.toUnmodifiableMap(
-                si -> Objects.requireNonNull(si.infix, "null infix not allowed for parseInfixPrecedenceLevel"),
-                Function.identity()));
-        String[] infixesToFind = sortedByLength(infixToSymbolInfo.keySet().toArray(String[]::new));
+        if(level == 0) return parseParensOrLiteral();
+        PrecedenceLevelInfo precInfo = SymbolInfo.PREC_LEVELS_INFO.get(level);
+        if (precInfo == null) return parseInfixPrecedenceLevel(level - 1);
         MathSymbol left = parseInfixPrecedenceLevel(level - 1);
-        if(dirn == GroupingDirection.RightToLeft) {
-            return parseInfixPrecedenceLevel_RTL(left, level, infixesToFind, infixToSymbolInfo);
+        if(precInfo.dirn == GroupingDirection.RightToLeft) {
+            return parseInfixPrecedenceLevel_RTL(left, precInfo);
         }
-        return parseInfixPrecedenceLevel_LTR(left, level, infixesToFind, infixToSymbolInfo);
+        return parseInfixPrecedenceLevel_LTR(left, precInfo);
         // TODO what if dirn == null? Maybe just disallow the ambiguous case of > 2 operands in same level
     }
 
-    private MathSymbol parseInfixPrecedenceLevel_RTL(MathSymbol left, int level, String[] infixesToFind,
-                                                     Map<String, SymbolInfo> infixToSymbolInfo) throws ExprParseException {
-        // TODO: refactor this mess - 2 separate loops?
-        //  I feel like it should be doable w/ one loop but that may involve risking NullPointerException
-        //  by setting some members of LeftRightBinaryOperation to null
-        //  Actually, this first loop could be common between them if we make the other path 2 loops as well
+    private MathSymbol parseInfixPrecedenceLevel_RTL(MathSymbol left, PrecedenceLevelInfo precInfo) throws ExprParseException {
         String op;
         List<Pair<SymbolInfo, MathSymbol>> otherOps = new ArrayList<>();
         discardWhitespace();
-        while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
-            otherOps.add(new Pair<>(Util.getNotNull(infixToSymbolInfo, op), parseInfixPrecedenceLevel(level - 1)));
+        while((op = discardMatchesNextAny_optionsSorted(precInfo.sortedInfixes)) != null) {
+            otherOps.add(new Pair<>(
+                Util.getNotNull(precInfo.infixToSymbolMap, op),
+                parseInfixPrecedenceLevel(precInfo.precedence - 1)));
             discardWhitespace();
         }
         return otherOps.reversed().stream().reduce((rightpair, leftpair) ->
             leftpair.asVars((preOp, argL) ->
-                new Pair<>(preOp, rightpair.asVars((midOp, argR) -> midOp.getBiConstructor().construct(argL, argR))))
-        ).map(p -> p.asVars((midOp, argR) -> midOp.getBiConstructor().construct(left, argR))).orElse(left);
+                new Pair<>(preOp, rightpair.asVars((midOp, argR) -> BinaryOperation.construct(argL, midOp, argR))))
+        ).map(p -> p.asVars((midOp, argR) -> BinaryOperation.construct(left, midOp, argR))).orElse(left);
     }
 
-    private MathSymbol parseInfixPrecedenceLevel_LTR(MathSymbol left, int level, String[] infixesToFind,
-                                                     Map<String, SymbolInfo> infixToSymbolInfo) throws ExprParseException {
+    private MathSymbol parseInfixPrecedenceLevel_LTR(MathSymbol left, PrecedenceLevelInfo precInfo) throws ExprParseException {
         String op;
         discardWhitespace();
-        while((op = discardMatchesNextAny_optionsSorted(infixesToFind)) != null) {
-            left = Util.getNotNull(infixToSymbolInfo, op).getBiConstructor()
-                .construct(left, parseInfixPrecedenceLevel(level - 1));
+        while((op = discardMatchesNextAny_optionsSorted(precInfo.sortedInfixes)) != null) {
+            left = BinaryOperation.construct(
+                left, Util.getNotNull(precInfo.infixToSymbolMap, op), parseInfixPrecedenceLevel(precInfo.precedence - 1));
             discardWhitespace();
         }
         return left;
@@ -182,24 +169,24 @@ public class Parser {
         return src.startsWith(expected, /*start*/idx);
     }
     
-    private @NotNull String @NotNull [] sortedByLength(@NotNull String @NotNull[] arr) {
-        return Arrays.stream(arr).sorted(Comparator.comparingInt(String::length).reversed()).toArray(String[]::new);
+    private @NotNull List<@NotNull String> sortedByLength(@NotNull List<@NotNull String> arr) {
+        return arr.stream().sorted(Comparator.comparingInt(String::length).reversed()).toList();
     }
-    private @Nullable String matchesNextAny_optionsSorted(@NotNull String... expected) {
-        return Arrays.stream(expected).filter(this::matchesNext).findFirst().orElse(null);
+    private @Nullable String matchesNextAny_optionsSorted(@NotNull List<@NotNull String> expected) {
+        return expected.stream().filter(this::matchesNext).findFirst().orElse(null);
     }
-    private @Nullable String discardMatchesNextAny_optionsSorted(@NotNull String... expected) {
+    private @Nullable String discardMatchesNextAny_optionsSorted(@NotNull List<@NotNull String> expected) {
         String s = matchesNextAny_optionsSorted(expected);
         if(s != null) discardN(s.length());
         return s;
     }
     @SuppressWarnings("unused")
-    protected @Nullable String matchesNextAny(@NotNull String... expected) {
+    protected @Nullable String matchesNextAny(@NotNull List<@NotNull String> expected) {
         // Try to longer ones first, then shorter ones.
         return matchesNextAny_optionsSorted(sortedByLength(expected));
     }
     @SuppressWarnings("unused")
-    protected @Nullable String discardMatchesNextAny(@NotNull String... expected) {
+    protected @Nullable String discardMatchesNextAny(@NotNull List<@NotNull String> expected) {
         // Try to longer ones first, then shorter ones.
         return discardMatchesNextAny_optionsSorted(sortedByLength(expected));
     }
