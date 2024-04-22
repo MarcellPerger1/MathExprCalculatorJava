@@ -59,8 +59,7 @@ public class Util {
     @SuppressWarnings("UnusedReturnValue")
     @Contract("_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection) {
-        // IllegalArgumentException might not always be appropriate
-        if(collection.isEmpty()) throw new IllegalArgumentException("Argument must not be empty");
+        if(collection.isEmpty()) throw new CollectionSizeException("Argument must not be empty");
         return collection;
     }
     @SuppressWarnings("UnusedReturnValue")
@@ -70,8 +69,7 @@ public class Util {
     }
     @Contract("_,_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection, String msg) {
-        // IllegalArgumentException might not always be appropriate
-        if(collection.isEmpty()) throw new IllegalArgumentException(msg);
+        if(collection.isEmpty()) throw new CollectionSizeException(msg);
         return collection;
     }
     @SuppressWarnings("UnusedReturnValue")
@@ -81,7 +79,6 @@ public class Util {
     }
     @Contract("_,_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection, RuntimeException exc) {
-        // IllegalArgumentException might not always be appropriate
         if(collection.isEmpty()) throw exc;
         return collection;
     }
