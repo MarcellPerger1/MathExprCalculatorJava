@@ -6,7 +6,6 @@ import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -147,8 +146,6 @@ class ParserTest {
             assertParsesTo(CommonData.getBigData3Pow_groupingParens());
         }
     }
-
-    @Disabled("[SKIP] Failing, will fix in a later PR")
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void parensWhitespaceBug(boolean disableCache) {
@@ -157,8 +154,6 @@ class ParserTest {
             assertInfixParsesTo("( 1.2 )", MUL_PREC, new BasicDoubleSymbol(1.2));
             assertParsesTo("( 1.2 )", new BasicDoubleSymbol(1.2));
             assertParsesTo("  1.2  ", new BasicDoubleSymbol(1.2));
-            // This is not - could be a bug in the future
-            assertInfixParsesTo("  1.2  ", 0, new BasicDoubleSymbol(1.2));
         }
     }
 

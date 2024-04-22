@@ -71,9 +71,9 @@ public class Parser {
     }
 
     public @Nullable MathSymbol parseParens() throws ExprParseException {
-        advanceExpectNext('(');
+        advanceExpectNext_ignoreWs('(');
         MathSymbol sym = parseExpr();
-        advanceExpectNext(')');
+        advanceExpectNext_ignoreWs(')');
         return sym;
     }
 
@@ -170,6 +170,10 @@ public class Parser {
     protected void advanceExpectNext(char expected) {
         char actual = advance();
         if(actual != expected) throw new ExprParseRtException("Expected '%c', got '%c'".formatted(expected, actual));
+    }
+    protected void advanceExpectNext_ignoreWs(char expected) {
+        discardWhitespace();
+        advanceExpectNext(expected);
     }
 
     protected boolean matchesNext(@NotNull String expected) {
