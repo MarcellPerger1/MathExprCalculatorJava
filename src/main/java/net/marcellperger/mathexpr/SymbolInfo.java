@@ -1,6 +1,7 @@
 package net.marcellperger.mathexpr;
 
 import net.marcellperger.mathexpr.util.Util;
+import net.marcellperger.mathexpr.util.UtilCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,37 +19,44 @@ import java.util.stream.Collectors;
 
 public enum SymbolInfo {
     // Let's say that precedence 0 is for (parens) OR literals - TODO add a class?? but it wouldn't actually be used !
-    // POW(PowOperation.class, 1, GroupingDirection.RightToLeft, "**"),
-    MUL(MulOperation.class, 1, GroupingDirection.LeftToRight, "*", MulOperation::new),
-    DIV(DivOperation.class, 1, GroupingDirection.LeftToRight, "/", DivOperation::new),
+    POW(PowOperation.class, 1, GroupingDirection.RightToLeft, "**", "", PowOperation::new),
 
-    ADD(AddOperation.class, 2, GroupingDirection.LeftToRight, "+", AddOperation::new),
-    SUB(SubOperation.class, 2, GroupingDirection.LeftToRight, "-", SubOperation::new),
+    MUL(MulOperation.class, 2, GroupingDirection.LeftToRight, "*", " ", MulOperation::new),
+    DIV(DivOperation.class, 2, GroupingDirection.LeftToRight, "/", " ", DivOperation::new),
+
+    ADD(AddOperation.class, 3, GroupingDirection.LeftToRight, "+", " ", AddOperation::new),
+    SUB(SubOperation.class, 3, GroupingDirection.LeftToRight, "-", " ", SubOperation::new),
     ;
 
     public static final Map<Class<? extends MathSymbol>, SymbolInfo> CLS_TO_INFO_MAP;
     public static final Map<Integer, Set<SymbolInfo>> PREC_TO_INFO_MAP;
     public static final List<Entry<Integer, Set<SymbolInfo>>> PREC_SORTED_INFO;
+    public static final int MAX_PRECEDENCE;
+    public static final Map<Integer, PrecedenceLevelInfo> PREC_LEVELS_INFO;
 
     public final int precedence;  // TODO make this Integer
     public final Class<? extends MathSymbol> cls;
     public final GroupingDirection groupingDirection;
     public final String infix;
+    public final @Nullable String spacesAroundInfix;
 
+    @SuppressWarnings("unused")  // useful later
     SymbolInfo(Class<? extends MathSymbol> cls, int precedence,
-               GroupingDirection groupingDirection, @Nullable String infix) {
+               GroupingDirection groupingDirection, @Nullable String spacesAroundInfix, @Nullable String infix) {
         this.precedence = precedence;
-        this.cls = cls;  // TODO: private + getters?
+        this.cls = cls;
         this.groupingDirection = groupingDirection;
         this.infix = infix;
+        this.spacesAroundInfix = spacesAroundInfix;
     }
     SymbolInfo(Class<? extends BinaryOperationLeftRight> cls, int precedence,
-               GroupingDirection groupingDirection, @Nullable String infix,
-               BinOpBiConstructor<?> biConstructor) {
+               GroupingDirection groupingDirection, @Nullable String infix, @Nullable String spacesAroundInfix,
+               BinOpBiConstructor biConstructor) {
         this.precedence = precedence;
         this.cls = cls;  // TODO: private + getters?
         this.groupingDirection = groupingDirection;
         this.infix = infix;
+        this.spacesAroundInfix = spacesAroundInfix;
         this.biConstructorCache = biConstructor;
     }
 
@@ -66,11 +74,13 @@ public enum SymbolInfo {
     public static @Nullable String infixFromClass(Class<? extends MathSymbol> cls) {
         return Util.chainNulls(fromClass(cls), x -> x.infix);
     }
+    public static @Nullable String spacesAroundInfixFromClass(Class<? extends MathSymbol> cls) {
+        return Util.chainNulls(fromClass(cls), s -> s.spacesAroundInfix);
+    }
 
-    private BinOpBiConstructor<?> biConstructorCache = null;
-    public @NotNull BinOpBiConstructor<?> getBiConstructor() {
+    private BinOpBiConstructor biConstructorCache = null;
+    public @NotNull BinOpBiConstructor getBiConstructor() {
         if(biConstructorCache != null) return biConstructorCache;
-        // TODO could add a BiFunction<> arg to SymbolInfo(), then pass AddOperation::new etc.
         assert BinaryOperationLeftRight.class.isAssignableFrom(cls);
 
         Constructor<? extends BinaryOperationLeftRight> ctor;
@@ -104,5 +114,7 @@ public enum SymbolInfo {
         CLS_TO_INFO_MAP = Arrays.stream(values()).collect(Collectors.toUnmodifiableMap(p -> p.cls, p -> p));
         PREC_TO_INFO_MAP = Arrays.stream(values()).collect(Collectors.groupingBy(s -> s.precedence, Collectors.toUnmodifiableSet()));
         PREC_SORTED_INFO = PREC_TO_INFO_MAP.entrySet().stream().sorted(Comparator.comparingInt(Entry::getKey)).toList();
+        MAX_PRECEDENCE = PREC_SORTED_INFO.getLast().getKey();
+        PREC_LEVELS_INFO = PREC_TO_INFO_MAP.keySet().stream().map(PrecedenceLevelInfo::newMapEntry).collect(UtilCollectors.entriesToMap());
     }
 }

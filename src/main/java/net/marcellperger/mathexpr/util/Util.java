@@ -1,6 +1,7 @@
 package net.marcellperger.mathexpr.util;
 
 
+import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,32 +49,42 @@ public class Util {
         return chainNulls(chainNulls(value, f0, f1, f2, f3), f4);
     }
 
+    /** This exists solely to be able to provide a custom error type */
+    @Contract(value = "null, _ -> fail; !null, _ -> param1", pure = true)
+    public static <T> @NotNull T requireNonNull(T obj, RuntimeException exc) {
+        if(obj == null) throw exc;
+        return obj;
+    }
+
     @SuppressWarnings("UnusedReturnValue")
     @Contract("_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection) {
-        // IllegalArgumentException might not always be appropriate
-        if(collection.isEmpty()) throw new IllegalArgumentException("Argument must not be empty");
+        if(collection.isEmpty()) throw new CollectionSizeException("Argument must not be empty");
         return collection;
     }
     @SuppressWarnings("UnusedReturnValue")
-    @Contract("_ -> param1")
-    public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(@NotNull C collection) {
-        Objects.requireNonNull(collection);
-        // IllegalArgumentException might not always be appropriate
-        if(collection.isEmpty()) throw new IllegalArgumentException("Argument must not be empty");
-        return collection;
+    @Contract("null -> fail; _ -> param1")
+    public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection) {
+        return requireNonEmpty(Objects.requireNonNull(collection));
     }
     @Contract("_,_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection, String msg) {
-        // IllegalArgumentException might not always be appropriate
-        if(collection.isEmpty()) throw new IllegalArgumentException(msg);
+        if(collection.isEmpty()) throw new CollectionSizeException(msg);
         return collection;
+    }
+    @SuppressWarnings("UnusedReturnValue")
+    @Contract("null, _ -> fail; _, _ -> param1")
+    public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection, String msg) {
+        return requireNonEmpty(Objects.requireNonNull(collection), msg);
     }
     @Contract("_,_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection, RuntimeException exc) {
-        // IllegalArgumentException might not always be appropriate
         if(collection.isEmpty()) throw exc;
         return collection;
+    }
+    @Contract("null, _ -> fail; _, _ -> param1")
+    public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection, RuntimeException exc) {
+        return requireNonEmpty(Objects.requireNonNull(collection), exc);
     }
 
     @Contract("_, _ -> param1")
@@ -164,5 +175,23 @@ public class Util {
     @Contract(value = "_, _ -> new", pure = true)
     public static @NotNull <K, V> Map.Entry<K, V> makeEntry(K k, V v) {
         return new AbstractMap.SimpleImmutableEntry<>(k, v);
+    }
+
+    @Contract(pure = true)
+    public static <K, V, R> @NotNull Function<Map.Entry<K, V>, Map.Entry<K, R>> valueMapper(Function<V, R> mapper) {
+        return en -> makeEntry(en.getKey(), mapper.apply(en.getValue()));
+    }
+
+    public static<T> T getOnlyItem(@Flow(sourceIsContainer = true) @NotNull Collection<T> c) {
+        if(c.size() != 1) throw new CollectionSizeException("Expected collection to have 1 item");
+        return c.iterator().next();
+    }
+    public static<T> T getOnlyItem(@Flow(sourceIsContainer = true) @NotNull SequencedCollection<T> c) {
+        if(c.size() != 1) throw new CollectionSizeException("Expected collection to have 1 item");
+        return c.getFirst();
+    }
+
+    public static <K, V> @NotNull V getNotNull(@NotNull Map<K, V> map, K key) {
+        return Objects.requireNonNull(map.get(key));
     }
 }
