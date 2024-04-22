@@ -83,22 +83,20 @@ public class Parser {
         PrecedenceLevelInfo precInfo = SymbolInfo.PREC_LEVELS_INFO.get(level);
         if (precInfo == null) return parseInfixPrecedenceLevel(level - 1);
         MathSymbol left = parseInfixPrecedenceLevel(level - 1);
-        if(precInfo.dirn == GroupingDirection.RightToLeft) {
-            return parseInfixPrecedenceLevel_RTL(left, precInfo);
-        }
-        return parseInfixPrecedenceLevel_LTR(left, precInfo);
-        // TODO what if dirn == null? Maybe just disallow the ambiguous case of > 2 operands in same level
+        return switch (precInfo.dirn) {
+            case LeftToRight -> parseInfixPrecedenceLevel_LTR(left, precInfo);
+            case RightToLeft -> parseInfixPrecedenceLevel_RTL(left, precInfo);
+            case null -> parseInfixPrecedenceLevel_noDirn(left, precInfo);
+        };
     }
 
     private MathSymbol parseInfixPrecedenceLevel_RTL(MathSymbol left, PrecedenceLevelInfo precInfo) throws ExprParseException {
         String op;
         List<Pair<SymbolInfo, MathSymbol>> otherOps = new ArrayList<>();
-        discardWhitespace();
-        while((op = discardMatchesNextAny_optionsSorted(precInfo.sortedInfixes)) != null) {
+        while((op = discardMatchesNextAny_optionsSorted_removeWs(precInfo.sortedInfixes)) != null) {
             otherOps.add(new Pair<>(
                 Util.getNotNull(precInfo.infixToSymbolMap, op),
                 parseInfixPrecedenceLevel(precInfo.precedence - 1)));
-            discardWhitespace();
         }
         return otherOps.reversed().stream().reduce((rightpair, leftpair) ->
             leftpair.asVars((preOp, argL) ->
@@ -108,13 +106,22 @@ public class Parser {
 
     private MathSymbol parseInfixPrecedenceLevel_LTR(MathSymbol left, PrecedenceLevelInfo precInfo) throws ExprParseException {
         String op;
-        discardWhitespace();
-        while((op = discardMatchesNextAny_optionsSorted(precInfo.sortedInfixes)) != null) {
+        while((op = discardMatchesNextAny_optionsSorted_removeWs(precInfo.sortedInfixes)) != null) {
             left = BinaryOperation.construct(
                 left, Util.getNotNull(precInfo.infixToSymbolMap, op), parseInfixPrecedenceLevel(precInfo.precedence - 1));
-            discardWhitespace();
         }
         return left;
+    }
+
+    private MathSymbol parseInfixPrecedenceLevel_noDirn(MathSymbol left, PrecedenceLevelInfo precInfo) throws ExprParseException {
+        String op;
+        if((op = discardMatchesNextAny_optionsSorted_removeWs(precInfo.sortedInfixes)) == null) return left;
+        MathSymbol result = BinaryOperation.construct(
+            left, Util.getNotNull(precInfo.infixToSymbolMap, op), parseInfixPrecedenceLevel(precInfo.precedence - 1));
+        if(matchesNextAny_optionsSorted_removeWs(precInfo.sortedInfixes) != null) {
+            throw new ExprParseException("Error: parens are required for precedence levels without a GroupingDirection");
+        }
+        return result;
     }
 
     // region utils
@@ -175,10 +182,18 @@ public class Parser {
     private @Nullable String matchesNextAny_optionsSorted(@NotNull List<@NotNull String> expected) {
         return expected.stream().filter(this::matchesNext).findFirst().orElse(null);
     }
+    private @Nullable String matchesNextAny_optionsSorted_removeWs(@NotNull List<@NotNull String> expected) {
+        discardWhitespace();
+        return matchesNextAny_optionsSorted(expected);
+    }
     private @Nullable String discardMatchesNextAny_optionsSorted(@NotNull List<@NotNull String> expected) {
         String s = matchesNextAny_optionsSorted(expected);
         if(s != null) discardN(s.length());
         return s;
+    }
+    private @Nullable String discardMatchesNextAny_optionsSorted_removeWs(@NotNull List<@NotNull String> expected) {
+        discardWhitespace();
+        return discardMatchesNextAny_optionsSorted(expected);
     }
     @SuppressWarnings("unused")
     protected @Nullable String matchesNextAny(@NotNull List<@NotNull String> expected) {
