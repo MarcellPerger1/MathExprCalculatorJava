@@ -38,6 +38,11 @@ public abstract class BinaryOperationLeftRight implements BinaryOperation {
     }
 
     @Contract(pure = true)
+    public @Nullable String getSpacesAroundInfixInst() {
+        return SymbolInfo.spacesAroundInfixFromClass(getClass());
+    }
+
+    @Contract(pure = true)
     public @Nullable GroupingDirection getGroupingDirectionInst() {
         return SymbolInfo.groupingDirectionFromClass(getClass());
     }
@@ -46,9 +51,11 @@ public abstract class BinaryOperationLeftRight implements BinaryOperation {
     public String fmt() {
         String infix = getInfixInst();
         if(infix == null) return BinaryOperation.super.fmt(); // fallback
-        return "%s %s %s".formatted(
+        return "%s%s%s%s%s".formatted(
                 left.fmtWithParensIfRequired(instPrecedenceInt(), _parensRequiredIfEqual(LeftRight.LEFT)),
+                getSpacesAroundInfixInst(),
                 infix,
+                getSpacesAroundInfixInst(),
                 right.fmtWithParensIfRequired(instPrecedenceInt(), _parensRequiredIfEqual(LeftRight.RIGHT)));
     }
 
