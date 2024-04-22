@@ -213,7 +213,7 @@ class ParserTest {
             restoreCache();
         }
 
-        // region implementation details (ctor, clearCache, restoreCache
+        // region implementation details (ctor, clearCache, restoreCache)
         private WithSuppressingCache() {}
 
         private Map<SymbolInfo, Optional<BinOpBiConstructor>> origCache = null;
