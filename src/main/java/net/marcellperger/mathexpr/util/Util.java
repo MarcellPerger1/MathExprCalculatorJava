@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -193,5 +194,54 @@ public class Util {
 
     public static <K, V> @NotNull V getNotNull(@NotNull Map<K, V> map, K key) {
         return Objects.requireNonNull(map.get(key));
+    }
+
+    @Contract(value = "_ -> new", pure = true)
+    public static <T> @NotNull Iterator<T> singleItemIterator(T value) {
+        return new SingleItemIterator<>(value);
+    }
+
+    protected static class SingleItemIterator<T> implements Iterator<T> {
+        T value;
+        boolean isAtEnd;
+
+        public SingleItemIterator(T value) {
+            this.value = value;
+            isAtEnd = false;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !isAtEnd;
+        }
+
+        @Override
+        public T next() {
+            if(isAtEnd) throw new NoSuchElementException("End of SingleItemIterator reached");
+            return _moveToEndAndPop();
+        }
+
+        protected T _moveToEndAndPop() {
+            isAtEnd = true;
+            T val = value;
+            // Don't hold on to our copy - we don't need it anymore
+            //  as iterators cannot go backwards and this lets JVM free it earlier.
+            value = null;
+            return val;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super T> action) {
+            if(isAtEnd) return;
+            action.accept(_moveToEndAndPop());
+        }
+    }
+
+    @Contract(pure = true)
+    static <T> @NotNull Function<? super T, VoidVal> consumerToFunction(Consumer<T> consumer) {
+        return v -> {
+            consumer.accept(v);
+            return VoidVal.val();
+        };
     }
 }
