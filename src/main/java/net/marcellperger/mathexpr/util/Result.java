@@ -101,17 +101,13 @@ public sealed interface Result<T, E> extends Iterable<T> {
         };
     }
 
+    // TODO toString
+
     default Result<T, E> inspect(Consumer<? super T> f) {
-        return map(value -> {
-            f.accept(value);
-            return value;
-        });
+        return map(Util.consumerToIdentityFunc(f));
     }
     default Result<T, E> inspectErr(Consumer<? super E> f) {
-        return mapErr(exc -> {
-            f.accept(exc);
-            return exc;
-        });
+        return mapErr(Util.consumerToIdentityFunc(f));
     }
 
     // .iter()-esque methods: why does Java have SO MANY - one is enough.
@@ -178,7 +174,7 @@ public sealed interface Result<T, E> extends Iterable<T> {
             case Ok<T, E> _ok -> then.get();
             case Err<T, E> err -> err.cast();
         };
-    }
+    }  // TODO refactor these add/andThen methods /similar to use common functionality
 
     default <E2> Result<T, E2> or(Result<T, E2> other) {
         return switch (this) {

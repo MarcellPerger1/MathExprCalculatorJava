@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 @SuppressWarnings("unused")
 public class Util {
@@ -238,10 +239,17 @@ public class Util {
     }
 
     @Contract(pure = true)
-    static <T> @NotNull Function<? super T, VoidVal> consumerToFunction(Consumer<T> consumer) {
+    static <T> @NotNull Function<? super T, VoidVal> consumerToFunction(Consumer<? super T> consumer) {
         return v -> {
             consumer.accept(v);
             return VoidVal.val();
+        };
+    }
+    @Contract(pure = true)
+    static <T> @NotNull UnaryOperator<T> consumerToIdentityFunc(Consumer<? super T> consumer) {
+        return v -> {
+            consumer.accept(v);
+            return v;
         };
     }
 }
