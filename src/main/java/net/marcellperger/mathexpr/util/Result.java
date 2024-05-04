@@ -27,13 +27,25 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings({"unused", "InnerClassOfInterface"})  // should be an abstract class but then the `record Ok/Err` cannot extend it
 public sealed interface Result<T, E> extends Iterable<T> {
+    // hashCode / equals is automatically implemented for these record types, but we customize toString
     record Ok<T, E>(T value) implements Result<T, E> {
         public<E2> Ok<T, E2> cast() { return new Ok<>(value); }
+
+        @Override
+        public String toString() {
+            return "Ok(" + value + ')';
+        }
     }
 
     record Err<T, E>(E exc) implements Result<T, E> {
         public<R2> Err<R2, E> cast() { return new Err<>(exc); }
+
+        @Override
+        public String toString() {
+            return "Err("  + exc + ')';
+        }
     }
+
 
     default @Nullable Ok<T, E> ok() {
         return switch (this) {
@@ -76,8 +88,6 @@ public sealed interface Result<T, E> extends Iterable<T> {
             case Err<T, E> e -> e.cast();
         };
     }
-    // TODO some sort of Consumer<> variant of these or a
-    //  (IMO more logically named) valueOrElse / tryElse / ifLetElse / andThenElse
     default <U> U mapOr(U default_, Function<? super T, ? extends U> f) {
         return mapOrElse((_e) -> default_, f);
     }
@@ -94,7 +104,13 @@ public sealed interface Result<T, E> extends Iterable<T> {
         };
     }
 
-    // TODO toString
+    // not a Rust function. Similar to mapOrElse but reversed arguments
+    default void ifThenElse(Consumer<? super T> okFn, Consumer<? super E> errFn) {
+        mapOrElse(Util.consumerToFunction(errFn), Util.consumerToFunction(okFn));
+    }
+    default <U> U ifThenElse(Function<? super T, ? extends U> okFn, Function<? super E, ? extends U> errFn) {
+        return mapOrElse(errFn, okFn);
+    }
 
     default Result<T, E> inspect(Consumer<? super T> f) {
         return map(Util.consumerToIdentityFunc(f));
