@@ -27,30 +27,26 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings({"unused", "InnerClassOfInterface"})  // should be an abstract class but then the `record Ok/Err` cannot extend it
 public sealed interface Result<T, E> extends Iterable<T> {
-    /*
-    impl<T, E> Result<T, E> for Ok<T> { ... }
-
-    impl<T, E> Result<T, E> for Err<E> { ... }
-
-    */
     record Ok<T, E>(T value) implements Result<T, E> {
-        @Override
-        public Ok<T, E> ok() { return this; }
-
         public<E2> Ok<T, E2> cast() { return new Ok<>(value); }
     }
-    // Ok<T, E1> == Ok<T, E2>
-    // void f(Ok<T, E1> arg);
-    //   f(new Ok<T, E2>(...).cast())
 
     record Err<T, E>(E exc) implements Result<T, E> {
-        public Err<T, E> err() { return this; }
-
         public<R2> Err<R2, E> cast() { return new Err<>(exc); }
     }
 
-    default @Nullable Ok<T, E> ok() { return null; }
-    default @Nullable Err<T, E> err() { return null; }
+    default @Nullable Ok<T, E> ok() {
+        return switch (this) {
+            case Ok<T, E> ok -> ok;
+            case Err<T, E> _e -> null;
+        };
+    }
+    default @Nullable Err<T, E> err() {
+        return switch (this) {
+            case Ok<T, E> _ok -> null;
+            case Err<T, E> err -> err;
+        };
+    }
 
     default Optional<Ok<T, E>> okOpt() { return Optional.ofNullable(ok()); }
     default Optional<Err<T, E>> errOpt() { return Optional.ofNullable(err()); }
@@ -83,10 +79,7 @@ public sealed interface Result<T, E> extends Iterable<T> {
     // TODO some sort of Consumer<> variant of these or a
     //  (IMO more logically named) valueOrElse / tryElse / ifLetElse / andThenElse
     default <U> U mapOr(U default_, Function<? super T, ? extends U> f) {
-        return switch (this) {
-            case Ok(T value) -> f.apply(value);
-            case Err<T, E> _err -> default_;
-        };
+        return mapOrElse((_e) -> default_, f);
     }
     default <U> U mapOrElse(Function<? super E, ? extends U> defaultFn, Function<? super T, ? extends U> f) {
         return switch (this) {
@@ -96,8 +89,8 @@ public sealed interface Result<T, E> extends Iterable<T> {
     }
     default <E2> Result<T, E2> mapErr(Function<? super E, ? extends E2> op) {
         return switch (this) {
-            case Err(E err) -> new Err<>(op.apply(err));
             case Ok<T, E> o -> o.cast();
+            case Err(E err) -> new Err<>(op.apply(err));
         };
     }
 
@@ -164,23 +157,17 @@ public sealed interface Result<T, E> extends Iterable<T> {
     // or can't even reason about it in the first place.
 
     default <U> Result<U, E> and(Result<U, E> other) {
-        return switch (this) {
-            case Ok<T, E> _ok -> other;  // everything normal, return right
-            case Err<T, E> err -> err.cast();
-        };
+        return andThen(() -> other);
     }
     default <U> Result<U, E> andThen(Supplier<? extends Result<U, E>> then) {
         return switch (this) {
-            case Ok<T, E> _ok -> then.get();
+            case Ok<T, E> _ok -> then.get();  // everything normal with `this`, do next
             case Err<T, E> err -> err.cast();
         };
-    }  // TODO refactor these add/andThen methods /similar to use common functionality
+    }
 
     default <E2> Result<T, E2> or(Result<T, E2> other) {
-        return switch (this) {
-            case Ok<T, E> ok -> ok.cast();
-            case Err<T, E> _err -> other;
-        };
+        return orElse(() -> other);
     }
     default <E2> Result<T, E2> orElse(Supplier<? extends Result<T, E2>> elseFn) {
         return switch (this) {
