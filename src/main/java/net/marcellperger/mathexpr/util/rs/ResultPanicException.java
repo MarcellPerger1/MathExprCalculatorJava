@@ -2,9 +2,8 @@ package net.marcellperger.mathexpr.util.rs;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class ResultPanicException extends RuntimeException {
+public class ResultPanicException extends PanicException {
     public ResultPanicException() {
     }
 
@@ -26,32 +25,11 @@ public class ResultPanicException extends RuntimeException {
         return new Builder();
     }
 
-    public static class Builder {  // TODO perhaps move up to PanicException class
-        protected @Nullable String msg;
-        protected @Nullable Throwable cause;
-
-        protected Builder() {
-            msg = null;
-            cause = null;
-        }
-
-        @Contract("_ -> this")
-        public Builder msg(@Nullable String msg) {
-            this.msg = msg;
-            return this;
-        }
-
-        @Contract("_ -> this")
-        public Builder cause(@Nullable Throwable cause) {
-            this.cause = cause;
-            return this;
-        }
-
+    public static class Builder extends PanicException.Builder {
+        @Override
         public ResultPanicException build() {
-            // This complication is required to ensure that initCause can be set later if not set now.
-            return msg != null
-                ? cause != null ? new ResultPanicException(msg, cause) : new ResultPanicException(msg)
-                : cause != null ? new ResultPanicException(cause) : new ResultPanicException();
+            return build(ResultPanicException::new, ResultPanicException::new,
+                ResultPanicException::new, ResultPanicException::new);
         }
     }
 }

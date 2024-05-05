@@ -9,7 +9,6 @@ public class ResultPanicWithValueException extends ResultPanicException {
     protected @Nullable Object value;
 
     /// To set the cause, use `.builder()`
-    @SuppressWarnings("unused")
     public ResultPanicWithValueException() {
     }
 
@@ -26,13 +25,8 @@ public class ResultPanicWithValueException extends ResultPanicException {
         this.value = value;
     }
 
-    @SuppressWarnings("unused")
     public ResultPanicWithValueException(Throwable cause) {
         super(cause);
-    }
-
-    protected ResultPanicWithValueException(@NotNull ResultPanicException parent) {
-        this(parent.getMessage(), parent.getCause());
     }
 
     public static @NotNull ResultPanicWithValueException fromMaybeExcValue(@Nullable Object value, String msg) {
@@ -93,7 +87,9 @@ public class ResultPanicWithValueException extends ResultPanicException {
 
         @Override
         public ResultPanicWithValueException build() {
-            ResultPanicWithValueException ret = new ResultPanicWithValueException(super.build());
+            ResultPanicWithValueException ret = build(
+                ResultPanicWithValueException::new, ResultPanicWithValueException::new,
+                ResultPanicWithValueException::new, ResultPanicWithValueException::new);
             ret.setValue(m_value);
             return ret;
         }
