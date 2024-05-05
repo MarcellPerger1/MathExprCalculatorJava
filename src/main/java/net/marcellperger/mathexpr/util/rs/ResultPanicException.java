@@ -20,12 +20,13 @@ public class ResultPanicException extends RuntimeException {
         super(cause);
     }
 
+    @SuppressWarnings("unused")  // may be used later
     @Contract(value = " -> new", pure = true)
     public static @NotNull Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
+    public static class Builder {  // TODO perhaps move up to PanicException class
         protected @Nullable String msg;
         protected @Nullable Throwable cause;
 

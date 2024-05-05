@@ -39,6 +39,7 @@ public class Parser {
 
     // https://regex101.com/r/2EogTA/1
     protected static final Pattern DOUBLE_RE = Pattern.compile("^([+-]?)(\\d*\\.\\d+|\\d+\\.?)(?:[eE]([+-]?\\d+))?");
+    @SuppressWarnings("unused")  // ignore for now - will fix later with the better error handling
     public @NotNull MathSymbol parseDoubleLiteral_exc() throws ExprParseException {
         return switch (parseDoubleLiteral_null()) {
             case null -> throw new ExprParseException("Couldn't parse double in expression");
