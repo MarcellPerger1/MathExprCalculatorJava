@@ -47,6 +47,7 @@ public class ResultPanicException extends RuntimeException {
         }
 
         public ResultPanicException build() {
+            // This complication is required to ensure that initCause can be set later if not set now.
             return msg != null
                 ? cause != null ? new ResultPanicException(msg, cause) : new ResultPanicException(msg)
                 : cause != null ? new ResultPanicException(cause) : new ResultPanicException();

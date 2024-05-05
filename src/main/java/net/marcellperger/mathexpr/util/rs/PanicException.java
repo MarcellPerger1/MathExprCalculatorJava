@@ -1,5 +1,6 @@
 package net.marcellperger.mathexpr.util.rs;
 
+@SuppressWarnings("unused")  // I don't care, this is a **util** package, I'll use it later
 public class PanicException extends RuntimeException {
     public PanicException() {
     }

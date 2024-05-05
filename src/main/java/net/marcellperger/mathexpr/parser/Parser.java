@@ -152,8 +152,7 @@ public class Parser {
      * @param predicate Keep advancing while this returns true
      * @return Amount of spaces advanced
      */
-    @SuppressWarnings("UnusedReturnValue")
-    int advanceWhile(@NotNull Function<Character, Boolean> predicate) {
+    protected int advanceWhile(@NotNull Function<Character, Boolean> predicate) {
         int n = 0;
         while (notEof() && advanceIf(predicate)) ++n;
         return n;
