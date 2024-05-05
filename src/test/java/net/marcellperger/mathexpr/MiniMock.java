@@ -141,6 +141,7 @@ public class MiniMock {
 
         public ZST_List() {}
         public ZST_List(int size) { m_size = size; }
+        @SuppressWarnings("unused")
         @Contract(pure = true)
         public ZST_List(@NotNull Collection<VoidVal> c) {
             m_size = c.size();

@@ -6,7 +6,7 @@
       <option name="IGNORE_BUILDER_PATTERN" value="true" />
       <option name="highestModifier" value="package-private" />
     </inspection_tool>
-    <inspection_tool class="unused" enabled="true" level="WARNING" enabled_by_default="true" ignoreAccessors="true" checkParameterExcludingHierarchy="false">
+    <inspection_tool class="unused" enabled="true" level="WARNING" enabled_by_default="true" inner_class="protected" method="protected" ignoreAccessors="true" checkParameterExcludingHierarchy="false">
       <option name="LOCAL_VARIABLE" value="true" />
       <option name="FIELD" value="true" />
       <option name="METHOD" value="true" />
