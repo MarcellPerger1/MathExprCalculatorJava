@@ -1,6 +1,6 @@
-package net.marcellperger.mathexpr.util;
+package net.marcellperger.mathexpr.util.rs;
 
-import org.jetbrains.annotations.Contract;
+import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +12,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
-// TODO maybe separate (sub-)package?
 
 
 /**
@@ -210,131 +208,4 @@ public sealed interface Result<T, E> extends Iterable<T> {
     // Cannot have implementations for Result<Result<T, E>, E> and similar because Java
     //  has nothing that allows us to enable methods if certain conditions are met
     //  and no multiple implementation blocks with possibly-different conditions on the type parameters.
-
-    // TODO maybe these exceptions deserve their own file...
-    class ResultPanicException extends RuntimeException {
-        public ResultPanicException() {
-        }
-        public ResultPanicException(String message) {
-            super(message);
-        }
-        public ResultPanicException(String message, Throwable cause) {
-            super(message, cause);
-        }
-        public ResultPanicException(Throwable cause) {
-            super(cause);
-        }
-
-        @Contract(value = " -> new", pure = true)
-        public static @NotNull Builder builder() {
-            return new Builder();
-        }
-
-        public static class Builder {
-            protected @Nullable String msg;
-            protected @Nullable Throwable cause;
-
-            protected Builder() {
-                msg = null;
-                cause = null;
-            }
-
-            @Contract("_ -> this")
-            public Builder msg(@Nullable String msg) {
-                this.msg = msg;
-                return this;
-            }
-            @Contract("_ -> this")
-            public Builder cause(@Nullable Throwable cause) {
-                this.cause = cause;
-                return this;
-            }
-
-            public ResultPanicException build() {
-                return msg != null
-                    ? cause != null ? new ResultPanicException(msg, cause) : new ResultPanicException(msg)
-                    : cause != null ? new ResultPanicException(cause) : new ResultPanicException();
-            }
-        }
-    }
-
-    // Can't make `Throwable`s generic because java...
-    class ResultPanicWithValueException extends ResultPanicException {
-        protected @Nullable Object value;
-
-        /// To set the cause, use `.builder()`
-        public ResultPanicWithValueException() {
-        }
-
-        public ResultPanicWithValueException(String message) {
-            super(message);
-        }
-
-        public ResultPanicWithValueException(String message, Throwable cause) {
-            super(message, cause);
-        }
-        public ResultPanicWithValueException(String message, Throwable cause, @Nullable Object value) {
-            super(message, cause);
-            this.value = value;
-        }
-
-        public ResultPanicWithValueException(Throwable cause) {
-            super(cause);
-        }
-
-        public static @NotNull ResultPanicWithValueException fromMaybeExcValue(@Nullable Object value, String msg) {
-            return switch (value) {
-                case null -> new ResultPanicWithValueException(msg);
-                case Throwable excValue -> new ResultPanicWithValueException(msg, excValue, excValue);
-                default -> new ResultPanicWithValueException(msg, null, value);
-            };
-        }
-        public static @NotNull ResultPanicWithValueException fromPlainValue(@Nullable Object value, String msg) {
-            ResultPanicWithValueException res = new ResultPanicWithValueException(msg);
-            res.setValue(value);
-            return res;
-        }
-
-        @Override
-        public String getMessage() {
-            return switch (super.getMessage()) {
-                case null -> value != null ? "Panic value: " + value : "";
-                case "" -> value != null ? "Panic value: " + value : "";
-                case String msg -> msg + (value == null ? "" : ": " + value);
-            };
-        }
-
-        protected ResultPanicWithValueException(@NotNull ResultPanicException parent) {
-            this(parent.getMessage(), parent.getCause());
-        }
-
-        public @Nullable Object getValue() {
-            return value;
-        }
-        public void setValue(@Nullable Object value) {
-            this.value = value;
-        }
-
-        public static class Builder extends ResultPanicException.Builder {
-            protected @Nullable Object value;
-
-            public Builder() {
-                super();
-                value = null;
-            }
-
-            @Contract("_ -> this")
-            public Builder value(Object value) {
-                this.value = value;
-                return this;
-            }
-
-            @Override
-            public ResultPanicWithValueException build() {
-                ResultPanicWithValueException ret = new ResultPanicWithValueException(super.build());
-                ret.setValue(value);
-                return ret;
-            }
-        }
-    }
 }
