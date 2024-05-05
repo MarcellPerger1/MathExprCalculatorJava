@@ -58,13 +58,11 @@ public class Util {
         return obj;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     @Contract("_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection) {
         if(collection.isEmpty()) throw new CollectionSizeException("Argument must not be empty");
         return collection;
     }
-    @SuppressWarnings("UnusedReturnValue")
     @Contract("null -> fail; _ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection) {
         return requireNonEmpty(Objects.requireNonNull(collection));
@@ -74,7 +72,6 @@ public class Util {
         if(collection.isEmpty()) throw new CollectionSizeException(msg);
         return collection;
     }
-    @SuppressWarnings("UnusedReturnValue")
     @Contract("null, _ -> fail; _, _ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection, String msg) {
         return requireNonEmpty(Objects.requireNonNull(collection), msg);
