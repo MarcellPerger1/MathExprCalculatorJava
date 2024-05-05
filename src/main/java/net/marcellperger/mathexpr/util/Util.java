@@ -239,14 +239,14 @@ public class Util {
     }
 
     @Contract(pure = true)
-    static <T> @NotNull Function<? super T, VoidVal> consumerToFunction(Consumer<? super T> consumer) {
+    public static <T> @NotNull Function<? super T, VoidVal> consumerToFunction(Consumer<? super T> consumer) {
         return v -> {
             consumer.accept(v);
             return VoidVal.val();
         };
     }
     @Contract(pure = true)
-    static <T> @NotNull UnaryOperator<T> consumerToIdentityFunc(Consumer<? super T> consumer) {
+    public static <T> @NotNull UnaryOperator<T> consumerToIdentityFunc(Consumer<? super T> consumer) {
         return v -> {
             consumer.accept(v);
             return v;
