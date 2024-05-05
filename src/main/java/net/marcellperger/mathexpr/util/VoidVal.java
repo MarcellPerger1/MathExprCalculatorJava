@@ -8,13 +8,21 @@ import org.jetbrains.annotations.NotNull;
  * when e.g. you don't actually want to return anything but {@code Function} interface
  * requires it to return instances of a type. Because 'no value' is a type that has
  * EXACTLY ONE instance: nothing ({@code None} / {@code ()} / {@code undefined})*/
-@SuppressWarnings("InstantiationOfUtilityClass")  // not a so-called 'utility class'; Pycharm just thinks it is
 public final class VoidVal {
-    static @NotNull VoidVal INST = new VoidVal();
+    static final @NotNull VoidVal INST = new VoidVal();
 
-    private VoidVal() {}
+    @SuppressWarnings("ConstantValue")  // This is actually called to initialize it to non-null
+    private VoidVal() {
+        if(INST != null) throw new AssertionError(
+            "new VoidVal() should only be called once to create VoidVal.INST");
+    }
 
     public static VoidVal val() {
         return INST;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this == obj;  // there can only be one.
     }
 }
