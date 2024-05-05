@@ -46,6 +46,13 @@ public sealed interface Result<T, E> extends Iterable<T> {
         }
     }
 
+    static <T, E> Ok<T, E> newOk(T value) {
+        return new Ok<>(value);
+    }
+    static <T, E> Err<T, E> newErr(E err) {
+        return new Err<>(err);
+    }
+
 
     default @Nullable Ok<T, E> ok() {
         return switch (this) {
