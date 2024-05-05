@@ -9,6 +9,7 @@ public class ResultPanicWithValueException extends ResultPanicException {
     protected @Nullable Object value;
 
     /// To set the cause, use `.builder()`
+    @SuppressWarnings("unused")
     public ResultPanicWithValueException() {
     }
 
@@ -25,6 +26,7 @@ public class ResultPanicWithValueException extends ResultPanicException {
         this.value = value;
     }
 
+    @SuppressWarnings("unused")
     public ResultPanicWithValueException(Throwable cause) {
         super(cause);
     }
@@ -42,9 +44,7 @@ public class ResultPanicWithValueException extends ResultPanicException {
     }
 
     public static @NotNull ResultPanicWithValueException fromPlainValue(@Nullable Object value, String msg) {
-        ResultPanicWithValueException res = new ResultPanicWithValueException(msg);
-        res.setValue(value);
-        return res;
+        return new Builder().msg(msg).value(value).build();
     }
 
     @Override
@@ -64,23 +64,37 @@ public class ResultPanicWithValueException extends ResultPanicException {
     }
 
     public static class Builder extends ResultPanicException.Builder {
-        protected @Nullable Object value;
+        protected @Nullable Object m_value;
 
         public Builder() {
             super();
-            value = null;
+            m_value = null;
+        }
+
+        @Override
+        public Builder msg(@Nullable String msg) {
+            // I wish there was a better way (e.g. a Self) type - could actually do
+            // CRTP here but that could get messy for users of the base type
+            super.msg(msg);
+            return this;
+        }
+
+        @Override
+        public Builder cause(@Nullable Throwable cause) {
+            super.cause(cause);
+            return this;
         }
 
         @Contract("_ -> this")
         public Builder value(Object value) {
-            this.value = value;
+            this.m_value = value;
             return this;
         }
 
         @Override
         public ResultPanicWithValueException build() {
             ResultPanicWithValueException ret = new ResultPanicWithValueException(super.build());
-            ret.setValue(value);
+            ret.setValue(m_value);
             return ret;
         }
     }
