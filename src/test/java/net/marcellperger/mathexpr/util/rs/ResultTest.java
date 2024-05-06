@@ -2,6 +2,10 @@ package net.marcellperger.mathexpr.util.rs;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import static net.marcellperger.mathexpr.MiniMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -117,35 +121,145 @@ class ResultTest {
     }
 
     @Test
-    void ifThenElse() {
+    void ifThenElse_consumer() {
+        MockedConsumer<Integer> intConsumer = new MockedConsumer<>();
+        MockedConsumer<String> strConsumer = new MockedConsumer<>();
+        {
+            getOk().ifThenElse(intConsumer, strConsumer);
+            intConsumer.assertCalledOnceWith(314);
+            strConsumer.assertNotCalled();
+        }
+        intConsumer.reset();
+        strConsumer.reset();
+        {
+            getErr().ifThenElse(intConsumer, strConsumer);
+            intConsumer.assertNotCalled();
+            strConsumer.assertCalledOnceWith("TESTING_ERROR");
+        }
     }
 
     @Test
-    void testIfThenElse() {
+    void ifThenElse_func() {
+        MockedFunction<Integer, String> intFn = new MockedFunction<>("intFn_return");
+        MockedFunction<String, String> strFn = new MockedFunction<>("strFn_return");
+        {
+            assertEquals("intFn_return",  getOk().ifThenElse(intFn, strFn));
+            intFn.assertCalledOnceWith(314);
+            strFn.assertNotCalled();
+        }
+        intFn.reset();
+        strFn.reset();
+        {
+            assertEquals("strFn_return", getErr().ifThenElse(intFn, strFn));
+            intFn.assertNotCalled();
+            strFn.assertCalledOnceWith("TESTING_ERROR");
+        }
     }
 
     @Test
     void inspect() {
+        MockedConsumer<Integer> intCons = new MockedConsumer<>();
+        assertEquals(getOk(), getOk().inspect(intCons));
+        intCons.assertCalledOnceWith(314);
+        intCons.reset();
+        assertEquals(getErr(), getErr().inspect(intCons));
+        intCons.assertNotCalled();
     }
 
     @Test
     void inspectErr() {
+        MockedConsumer<String> strCons = new MockedConsumer<>();
+        assertEquals(getErr(), getErr().inspectErr(strCons));
+        strCons.assertCalledOnceWith("TESTING_ERROR");
+        strCons.reset();
+        assertEquals(getOk(), getOk().inspectErr(strCons));
+        strCons.assertNotCalled();
     }
 
     @Test
     void stream() {
+        assertEquals(List.of(314), getOk().stream().toList());
+        assertEquals(List.of(), getErr().stream().toList());
     }
 
     @Test
     void iterator() {
+        {
+            Iterator<Integer> oks = getOk().iterator();
+            assertTrue(oks.hasNext());
+            assertEquals(314, oks.next());
+            assertFalse(oks.hasNext());
+        }
+        {
+            List<Integer> ls = new ArrayList<>();
+            getOk().iterator().forEachRemaining(ls::add);
+            assertEquals(List.of(314), ls);
+        }
+        {
+            Iterator<Integer> oks = getErr().iterator();
+            assertFalse(oks.hasNext());
+        }
+        {
+            List<Integer> ls = new ArrayList<>();
+            getErr().iterator().forEachRemaining(ls::add);
+            assertEquals(List.of(), ls);
+        }
     }
 
     @Test
     void forEach() {
+        MockedConsumer<Integer> intCons = new MockedConsumer<>();
+        {
+            getOk().forEach(intCons);
+            intCons.assertCalledOnceWith(314);
+        }
+        intCons.reset();
+        {
+            getErr().forEach(intCons);
+            intCons.assertNotCalled();
+        }
     }
 
     @Test
     void unwrap() {
+        assertEquals(314, assertDoesNotThrow(() -> getOk().unwrap()));
+        {
+            Result<Integer, String> err = getErr();
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, err::unwrap);
+            assertEquals("TESTING_ERROR", exc.getValue());
+            assertEquals("unwrap() got Err value: TESTING_ERROR", exc.getMessage());
+            assertNull(exc.getCause(), "Expected no cause when Err is a string");
+        }
+        {
+            MyCustomException customExc = new MyCustomException("CUSTOM_ERR_VALUE");
+            Result<Integer, MyCustomException> err = Result.newErr(customExc);
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, err::unwrap);
+            assertEquals(customExc, exc.getValue());
+            assertEquals("unwrap() got Err value: " +
+                "net.marcellperger.mathexpr.util.rs.ResultTest$MyCustomException:" +
+                " CUSTOM_ERR_VALUE", exc.getMessage());
+            assertEquals(customExc, exc.getCause());
+        }
+    }
+
+    @SuppressWarnings("unused")
+    static class MyCustomException extends RuntimeException {
+        public MyCustomException() {
+        }
+
+        public MyCustomException(String message) {
+            super(message);
+        }
+
+        public MyCustomException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public MyCustomException(Throwable cause) {
+            super(cause);
+        }
     }
 
     @Test

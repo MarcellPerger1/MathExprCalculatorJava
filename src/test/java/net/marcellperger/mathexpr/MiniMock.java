@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -132,6 +133,17 @@ public class MiniMock {
         public boolean test(T arg) {
             handleCall(arg);
             return getReturn(arg);
+        }
+    }
+
+    public static class MockedConsumer<T> extends BaseMockedCallable<T> implements Consumer<T> {
+        public MockedConsumer() {
+            calls = new ArrayList<>();
+        }
+
+        @Override
+        public void accept(T arg) {
+            handleCall(arg);
         }
     }
 
