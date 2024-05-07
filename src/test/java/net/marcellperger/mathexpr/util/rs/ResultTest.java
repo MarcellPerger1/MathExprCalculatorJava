@@ -312,29 +312,101 @@ class ResultTest {
 
     @Test
     void expect_err() {
+        assertEquals("TESTING_ERROR", assertDoesNotThrow(() -> getErr().expect_err("EXPECT_ERR_MSG")));
+        {
+            Result<Integer, String> err = getOk();
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, () -> err.expect_err("EXPECT_ERR_MSG"));
+            assertEquals(314, exc.getValue());
+            assertEquals("EXPECT_ERR_MSG: 314", exc.getMessage());
+            assertNull(exc.getCause(), "Expected no cause for Ok");
+        }
+        {
+            MyCustomException customExc = new MyCustomException("CUSTOM_ERR_VALUE");
+            Result<MyCustomException, Integer> err = Result.newOk(customExc);
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, () -> err.expect_err("EXPECT_ERR_MSG"));
+            assertEquals(customExc, exc.getValue());
+            assertEquals("EXPECT_ERR_MSG: " +
+                "net.marcellperger.mathexpr.util.rs.ResultTest$MyCustomException:" +
+                " CUSTOM_ERR_VALUE", exc.getMessage());
+            assertNull(exc.getCause(), "Don't set cause for Ok");
+        }
     }
 
     @Test
     void and() {
+        assertEquals(Result.newOk(91L), getOk().and(Result.newOk(91L)));
+        assertEquals(Result.newErr("ERR_RIGHT"), getOk().and(Result.newErr("ERR_RIGHT")));
+        assertEquals(Result.newErr("TESTING_ERROR"), getErr().and(Result.newOk(91L)));
+        assertEquals(Result.newErr("TESTING_ERROR"), getErr().and(Result.newErr("ERR_RIGHT")));
     }
 
     @Test
     void andThen() {
+        MockedFunction<Integer, Result<Long, String>> mfOk = new MockedFunction<>(Result.newOk(91L));
+        MockedFunction<Integer, Result<Long, String>> mfErr = new MockedFunction<>(Result.newErr("ERR_RIGHT"));
+        {
+            assertEquals(Result.newOk(91L), getOk().andThen(mfOk));
+            mfOk.assertCalledOnceWith(314);
+            assertEquals(Result.newErr("ERR_RIGHT"), getOk().andThen(mfErr));
+            mfErr.assertCalledOnceWith(314);
+        }
+        mfOk.reset();
+        mfErr.reset();
+        {
+            assertEquals(Result.newErr("TESTING_ERROR"), getErr().andThen(mfOk));
+            mfOk.assertNotCalled();
+            assertEquals(Result.newErr("TESTING_ERROR"), getErr().andThen(mfErr));
+            mfErr.assertNotCalled();
+        }
     }
 
     @Test
     void or() {
+        assertEquals(getOk(), getOk().or(Result.newOk(271)));
+        assertEquals(getOk(), getOk().or(Result.newErr("ERR_RIGHT")));
+        assertEquals(Result.newOk(271), getErr().or(Result.newOk(271)));
+        assertEquals(Result.newErr("ERR_RIGHT"), getErr().or(Result.newErr("ERR_RIGHT")));
     }
 
     @Test
     void orElse() {
+        MockedFunction<String, Result<Integer, String>> mfOk = new MockedFunction<>(Result.newOk(271));
+        MockedFunction<String, Result<Integer, String>> mfErr = new MockedFunction<>(Result.newErr("ERR_RIGHT"));
+        {
+            assertEquals(getOk(), getOk().orElse(mfOk));
+            mfOk.assertNotCalled();
+            assertEquals(getOk(), getOk().orElse(mfErr));
+            mfErr.assertNotCalled();
+        }
+        mfOk.reset();
+        mfErr.reset();
+        {
+            assertEquals(Result.newOk(271), getErr().orElse(mfOk));
+            mfOk.assertCalledOnceWith("TESTING_ERROR");
+            assertEquals(Result.newErr("ERR_RIGHT"), getErr().orElse(mfErr));
+            mfErr.assertCalledOnceWith("TESTING_ERROR");
+        }
     }
 
     @Test
     void unwrapOr() {
+        assertEquals(314, getOk().unwrapOr(-1));
+        assertEquals(-1, getErr().unwrapOr(-1));
     }
 
     @Test
     void unwrapOrElse() {
+        MockedFunction<String, Integer> mf = new MockedFunction<>(271);
+        {
+            assertEquals(314, getOk().unwrapOrElse(mf));
+            mf.assertNotCalled();
+        }
+        mf.reset();
+        {
+            assertEquals(271, getErr().unwrapOrElse(mf));
+            mf.assertCalledOnceWith("TESTING_ERROR");
+        }
     }
 }
