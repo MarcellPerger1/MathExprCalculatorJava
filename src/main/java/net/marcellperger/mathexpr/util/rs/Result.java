@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 
@@ -168,13 +167,13 @@ public sealed interface Result<T, E> extends Iterable<T> {
     //     system which would solve the first BP.
     //  - I really don't want to use reflection, because in strongly typed languages,
     //     my philosophy is "Check as much as possible at compile-time to reduce runtime failure". </rant>
-    default E expect_err(String msg) {
+    default E expectErr(String msg) {
         return ifThenElse(ok -> {
             throw ResultPanicWithValueException.fromPlainValue(ok, msg);
         }, Function.identity());
     }
-    default E unwrap_err() {
-        return expect_err("unwrap_err() got Ok value");
+    default E unwrapErr() {
+        return expectErr("unwrapErr() got Ok value");
     }
     // We can't implement into_ok/into_err as Java doesn't have that
     // kind of infallible type and I don't think Java can be that rigorous about
