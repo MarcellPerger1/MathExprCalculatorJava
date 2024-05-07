@@ -182,22 +182,22 @@ public sealed interface Result<T, E> extends Iterable<T> {
     // or can't even reason about it in the first place.
 
     default <U> Result<U, E> and(Result<U, E> other) {
-        return andThen(() -> other);
+        return andThen((_ok) -> other);
     }
-    default <U> Result<U, E> andThen(Supplier<? extends Result<U, E>> then) {
+    default <U> Result<U, E> andThen(Function<? super T, ? extends Result<U, E>> then) {
         return switch (this) {
-            case Ok<T, E> _ok -> then.get();  // everything normal with `this`, do next
+            case Ok(T value) -> then.apply(value);  // everything normal with `this`, do next
             case Err<T, E> err -> err.cast();
         };
     }
 
     default <E2> Result<T, E2> or(Result<T, E2> other) {
-        return orElse(() -> other);
+        return orElse((_err) -> other);
     }
-    default <E2> Result<T, E2> orElse(Supplier<? extends Result<T, E2>> elseFn) {
+    default <E2> Result<T, E2> orElse(Function<? super E, ? extends Result<T, E2>> elseFn) {
         return switch (this) {
             case Ok<T, E> ok -> ok.cast();
-            case Err<T, E> _err -> elseFn.get();  // `this` failed so try `elseFn` - "You're my only hope"
+            case Err(E err) -> elseFn.apply(err);  // `this` failed so try `elseFn` - "You're my only hope"
         };
     }
 
