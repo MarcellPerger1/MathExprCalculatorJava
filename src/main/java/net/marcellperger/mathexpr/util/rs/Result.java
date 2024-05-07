@@ -146,7 +146,9 @@ public sealed interface Result<T, E> extends Iterable<T> {
         return expect("unwrap() got Err value");
     }
     default T expect(String msg) {
-        return unwrapOrElse((err) -> {throw ResultPanicWithValueException.fromMaybeExcValue(err, msg);});
+        return unwrapOrElse((err) -> {
+            throw ResultPanicWithValueException.fromMaybeExcValue(err, msg);
+        });
     }
     // We CANNOT do unwrap_or_default because Java: <rant>
     //  - Static methods cannot be overloaded properly and cannot even be part of an interface
@@ -167,7 +169,9 @@ public sealed interface Result<T, E> extends Iterable<T> {
     //  - I really don't want to use reflection, because in strongly typed languages,
     //     my philosophy is "Check as much as possible at compile-time to reduce runtime failure". </rant>
     default E expect_err(String msg) {
-        return errOpt().orElseThrow(() -> ResultPanicWithValueException.fromPlainValue(ok(), msg)).exc;
+        return ifThenElse(ok -> {
+            throw ResultPanicWithValueException.fromPlainValue(ok, msg);
+        }, Function.identity());
     }
     default E unwrap_err() {
         return expect_err("unwrap_err() got Ok value");

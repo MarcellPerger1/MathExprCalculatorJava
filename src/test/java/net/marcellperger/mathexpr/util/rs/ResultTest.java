@@ -264,14 +264,54 @@ class ResultTest {
 
     @Test
     void expect() {
-    }
-
-    @Test
-    void expect_err() {
+        assertEquals(314, assertDoesNotThrow(() -> getOk().expect("EXPECT_MSG")));
+        {
+            Result<Integer, String> err = getErr();
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, () -> err.expect("EXPECT_MSG"));
+            assertEquals("TESTING_ERROR", exc.getValue());
+            assertEquals("EXPECT_MSG: TESTING_ERROR", exc.getMessage());
+            assertNull(exc.getCause(), "Expected no cause when Err is a string");
+        }
+        {
+            MyCustomException customExc = new MyCustomException("CUSTOM_ERR_VALUE");
+            Result<Integer, MyCustomException> err = Result.newErr(customExc);
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, () -> err.expect("EXPECT_MSG"));
+            assertEquals(customExc, exc.getValue());
+            assertEquals("EXPECT_MSG: " +
+                "net.marcellperger.mathexpr.util.rs.ResultTest$MyCustomException:" +
+                " CUSTOM_ERR_VALUE", exc.getMessage());
+            assertEquals(customExc, exc.getCause());
+        }
     }
 
     @Test
     void unwrap_err() {
+        assertEquals("TESTING_ERROR", assertDoesNotThrow(() -> getErr().unwrap_err()));
+        {
+            Result<Integer, String> err = getOk();
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, err::unwrap_err);
+            assertEquals(314, exc.getValue());
+            assertEquals("unwrap_err() got Ok value: 314", exc.getMessage());
+            assertNull(exc.getCause(), "Expected no cause for Ok");
+        }
+        {
+            MyCustomException customExc = new MyCustomException("CUSTOM_ERR_VALUE");
+            Result<MyCustomException, Integer> err = Result.newOk(customExc);
+            ResultPanicWithValueException exc = assertThrows(
+                ResultPanicWithValueException.class, err::unwrap_err);
+            assertEquals(customExc, exc.getValue());
+            assertEquals("unwrap_err() got Ok value: " +
+                "net.marcellperger.mathexpr.util.rs.ResultTest$MyCustomException:" +
+                " CUSTOM_ERR_VALUE", exc.getMessage());
+            assertNull(exc.getCause(), "Don't set cause for Ok");
+        }
+    }
+
+    @Test
+    void expect_err() {
     }
 
     @Test
