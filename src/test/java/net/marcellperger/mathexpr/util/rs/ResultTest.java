@@ -1,10 +1,13 @@
 package net.marcellperger.mathexpr.util.rs;
 
+import net.marcellperger.mathexpr.util.rs.Result.Ok;
+import net.marcellperger.mathexpr.util.rs.Result.Err;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import static net.marcellperger.mathexpr.MiniMock.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -408,5 +411,23 @@ class ResultTest {
             assertEquals(271, getErr().unwrapOrElse(mf));
             mf.assertCalledOnceWith("TESTING_ERROR");
         }
+    }
+
+    @Test
+    void test_toString() {
+        assertEquals("Ok(314)", getOk().toString());
+        assertEquals("Err(TESTING_ERROR)", getErr().toString());
+    }
+
+    @Test
+    void okOpt() {
+        assertEquals(Optional.of(new Ok<>(314)), getOk().okOpt());
+        assertEquals(Optional.empty(), getErr().okOpt());
+    }
+
+    @Test
+    void errOpt() {
+        assertEquals(Optional.empty(), getOk().errOpt());
+        assertEquals(Optional.of(new Err<>("TESTING_ERROR")), getErr().errOpt());
     }
 }
