@@ -4,12 +4,15 @@ import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-public sealed interface Option<T> {
+public sealed interface Option<T> extends Iterable<T> {
     record Some<T>(T value) implements Option<T> {
         @Contract(pure = true)
         @Override
@@ -94,5 +97,23 @@ public sealed interface Option<T> {
     default Option<T> inspectErr(Runnable noneFn) {
         if(isNone()) noneFn.run();
         return this;
+    }
+
+    // .iter()-esque methods: why does Java have SO MANY - one is enough.
+    default Stream<T> stream() {
+        return mapOrElse(Stream::empty, Stream::of);
+    }
+    // Iterable automatically implements `spliterator()` for us
+    @NotNull
+    @Override
+    default Iterator<T> iterator() {
+        return switch (this) {
+            case Some(T value) -> Util.singleItemIterator(value);
+            case None() -> Collections.emptyIterator();
+        };
+    }
+    @Override
+    default void forEach(Consumer<? super T> action) {
+        map(Util.consumerToFunction(action));
     }
 }

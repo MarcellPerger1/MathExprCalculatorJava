@@ -5,6 +5,10 @@ import net.marcellperger.mathexpr.util.rs.Option.Some;
 import net.marcellperger.mathexpr.util.rs.Option.None;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class OptionTest {
@@ -139,5 +143,49 @@ class OptionTest {
         mRunnable.reset();
         assertEquals(getSome(), getSome().inspectErr(mRunnable));
         mRunnable.assertNotCalled();
+    }
+
+    @Test
+    void stream() {
+        assertEquals(List.of(314), getSome().stream().toList());
+        assertEquals(List.of(), getNone().stream().toList());
+    }
+
+    @Test
+    void iterator() {
+        {
+            Iterator<Integer> oks = getSome().iterator();
+            assertTrue(oks.hasNext());
+            assertEquals(314, oks.next());
+            assertFalse(oks.hasNext());
+        }
+        {
+            List<Integer> ls = new ArrayList<>();
+            getSome().iterator().forEachRemaining(ls::add);
+            assertEquals(List.of(314), ls);
+        }
+        {
+            Iterator<Integer> oks = getNone().iterator();
+            assertFalse(oks.hasNext());
+        }
+        {
+            List<Integer> ls = new ArrayList<>();
+            getNone().iterator().forEachRemaining(ls::add);
+            assertEquals(List.of(), ls);
+        }
+    }
+
+    @Test
+    void forEach() {
+        MockedConsumer<Integer> intCons = new MockedConsumer<>();
+        {
+            getSome().forEach(intCons);
+            intCons.assertCalledOnceWith(314);
+        }
+        intCons.reset();
+        {
+            getNone().forEach(intCons);
+            intCons.assertNotCalled();
+        }
     }
 }
