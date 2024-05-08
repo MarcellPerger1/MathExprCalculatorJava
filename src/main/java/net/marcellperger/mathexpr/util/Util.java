@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 @SuppressWarnings("unused")
@@ -247,6 +248,13 @@ public class Util {
         return v -> {
             consumer.accept(v);
             return v;
+        };
+    }
+
+    public static @NotNull Supplier<VoidVal> runnableToSupplier(Runnable runnable) {
+        return () -> {
+            runnable.run();
+            return VoidVal.val();
         };
     }
 }

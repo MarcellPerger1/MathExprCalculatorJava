@@ -147,6 +147,15 @@ public class MiniMock {
         }
     }
 
+    public static class MockedRunnable extends BaseMockedCallable<VoidVal> implements Runnable {
+        public MockedRunnable() {
+            calls = new ZST_List();
+        }
+
+        @Override
+        public void run() { handleCall(VoidVal.val()); }
+    }
+
     // oof, this List interface is monstrously big, with very few defaults!
     static class ZST_List implements List<VoidVal> {
         private int m_size = 0;  // I wish this could be long but size() requires int
