@@ -65,6 +65,7 @@
                                     <element>SOURCEFILE</element>
                                     <includes>
                                         <include>net/marcellperger/mathexpr/util/rs/Result.java</include>
+                                        <include>net/marcellperger/mathexpr/util/rs/Option.java</include>
                                     </includes>
                                     <limits>
                                         <limit>
