@@ -134,7 +134,42 @@ public sealed interface Option<T> extends Iterable<T> {
     default T unwrap() {
         return expect("Option.unwrap() got None value");
     }
+
+    default <E> Result<T, E> okOr(E err) {
+        return ifThenElse(Result::newOk, () -> Result.newErr(err));
+    }
+    default <E> Result<T, E> okOrElse(Supplier<? extends E> errSupplier) {
+        return ifThenElse(Result::newOk, () -> Result.newErr(errSupplier.get()));
+    }
+
+    default <U> Option<U> and(Option<U> right) {
+        return andThen((_v) -> right);
+    }
+    default <U> Option<U> andThen(Function<? super T, ? extends Option<U>> fn) {
+        return switch (this) {
+            case Some(T value) -> fn.apply(value);
+            case None<T> n -> n.cast();
+        };
+    }
+
+    default Option<T> or(Option<T> right) {
+        return orElse(() -> right);
+    }
+    default Option<T> orElse(Supplier<? extends Option<T>> orFn) {
+        return switch (this) {
+            case Some<T> s -> s;
+            case None() -> orFn.get();
+        };
+    }
+
+    default Option<T> filter(Predicate<? super T> predicate) {
+        return switch (this) {
+            case Some(T value) -> predicate.test(value) ? this : newNone();
+            case None<T> n -> n;
+        };
+    }
+
     // no insert / get_or_insert(_*) / take(_if) / replace
     // (as record is immutable in Java)
-    // TODO unwrap, check Rust docs
+    // TODO check Rust docs
 }

@@ -225,4 +225,100 @@ class OptionTest {
         assertEquals("Option.unwrap() got None value", exc.getMessage());
         assertNull(exc.getCause(), "Expected no cause for Option.unwrap()");
     }
+
+    @Test
+    void okOr() {
+        assertEquals(Result.newOk(314), getSome().okOr("ERR_ARG"));
+        assertEquals(Result.newErr("ERR_ARG"), getNone().okOr("ERR_ARG"));
+    }
+
+    @Test
+    void okOrElse() {
+        MockedSupplier<String> ms = new MockedSupplier<>("ERR_FN_RETURN");
+        {
+            assertEquals(Result.newOk(314), getSome().okOrElse(ms));
+            ms.assertNotCalled();
+        }
+        ms.reset();
+        {
+            assertEquals(Result.newErr("ERR_FN_RETURN"), getNone().okOrElse(ms));
+            ms.assertCalledOnce();
+        }
+    }
+
+    @Test
+    void and() {
+        assertEquals(Option.newSome(91L), getSome().and(Option.newSome(91L)));
+        assertEquals(Option.newNone(), getSome().and(Option.newNone()));
+        assertEquals(Option.newNone(), getNone().and(Option.newSome(91L)));
+        assertEquals(Option.newNone(), getNone().and(getNone()));
+    }
+
+    @Test
+    void andThen() {
+        MockedFunction<Integer, Option<Long>> mfOk = new MockedFunction<>(Option.newSome(91L));
+        MockedFunction<Integer, Option<Long>> mfErr = new MockedFunction<>(Option.newNone());
+        {
+            assertEquals(Option.newSome(91L), getSome().andThen(mfOk));
+            mfOk.assertCalledOnceWith(314);
+            assertEquals(Option.newNone(), getSome().andThen(mfErr));
+            mfErr.assertCalledOnceWith(314);
+        }
+        mfOk.reset();
+        mfErr.reset();
+        {
+            assertEquals(Option.newNone(), getNone().andThen(mfOk));
+            mfOk.assertNotCalled();
+            assertEquals(Option.newNone(), getNone().andThen(mfErr));
+            mfErr.assertNotCalled();
+        }
+    }
+
+    @Test
+    void filter() {
+        MockedPredicate<Integer> mTrue = new MockedPredicate<>(true);
+        MockedPredicate<Integer> mFalse = new MockedPredicate<>(false);
+        {
+            assertEquals(getSome(), getSome().filter(mTrue));
+            mTrue.assertCalledOnceWith(314);
+            assertEquals(getNone(), getSome().filter(mFalse));
+            mFalse.assertCalledOnceWith(314);
+        }
+        mTrue.reset();
+        mFalse.reset();
+        {
+            assertEquals(getNone(), getNone().filter(mTrue));
+            mTrue.assertNotCalled();
+            assertEquals(getNone(), getNone().filter(mFalse));
+            mFalse.assertNotCalled();
+        }
+    }
+
+    @Test
+    void or() {
+        assertEquals(getSome(), getSome().or(Option.newSome(271)));
+        assertEquals(getSome(), getSome().or(getNone()));
+        assertEquals(Option.newSome(271), getNone().or(Option.newSome(271)));
+        assertEquals(getNone(), getNone().or(getNone()));
+    }
+
+    @Test
+    void orElse() {
+        MockedSupplier<Option<Integer>> mSome = new MockedSupplier<>(Option.newSome(271));
+        MockedSupplier<Option<Integer>> mNone = new MockedSupplier<>(Option.newNone());
+        {
+            assertEquals(getSome(), getSome().orElse(mSome));
+            mSome.assertNotCalled();
+            assertEquals(getSome(), getSome().orElse(mNone));
+            mNone.assertNotCalled();
+        }
+        mSome.reset();
+        mNone.reset();
+        {
+            assertEquals(Option.newSome(271), getNone().orElse(mSome));
+            mSome.assertCalledOnce();
+            assertEquals(Option.newNone(), getNone().orElse(mNone));
+            mNone.assertCalledOnce();
+        }
+    }
 }
