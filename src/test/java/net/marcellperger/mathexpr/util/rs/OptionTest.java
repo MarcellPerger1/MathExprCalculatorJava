@@ -90,7 +90,7 @@ class OptionTest {
     }
 
     @Test
-    void ifThenElse__func_supp() {
+    void ifThenElse() {
         MockedSupplier<Integer> mSupplier = new MockedSupplier<>(-6);
         MockedFunction<Integer, Integer> mfAdd1 = new MockedFunction<>(i -> i + 1);
         {
@@ -108,18 +108,18 @@ class OptionTest {
     }
 
     @Test
-    void ifThenElse__cons_runnable() {
+    void ifThenElse_void() {
         MockedConsumer<Integer> mCons = new MockedConsumer<>();
         MockedRunnable mRunnable = new MockedRunnable();
         {
-            getSome().ifThenElse(mCons, mRunnable);
+            getSome().ifThenElse_void(mCons, mRunnable);
             mCons.assertCalledOnceWith(314);
             mRunnable.assertNotCalled();
         }
         mCons.reset();
         mRunnable.reset();
         {
-            getNone().ifThenElse(mCons, mRunnable);
+            getNone().ifThenElse_void(mCons, mRunnable);
             mCons.assertNotCalled();
             mRunnable.assertCalledOnce();
         }
@@ -187,5 +187,42 @@ class OptionTest {
             getNone().forEach(intCons);
             intCons.assertNotCalled();
         }
+    }
+
+    @Test
+    void unwrapOr() {
+        assertEquals(314, getSome().unwrapOr(-1));
+        assertEquals(-1, getNone().unwrapOr(-1));
+    }
+
+    @Test
+    void unwrapOrElse() {
+        MockedSupplier<Integer> ms = new MockedSupplier<>(271);
+        {
+            assertEquals(314, getSome().unwrapOrElse(ms));
+            ms.assertNotCalled();
+        }
+        ms.reset();
+        {
+            assertEquals(271, getNone().unwrapOrElse(ms));
+            ms.assertCalledOnce();
+        }
+    }
+
+    @Test
+    void expect() {
+        assertEquals(314, assertDoesNotThrow(() -> getSome().expect("EXPECT_MSG")));
+        Option<Integer> n = getNone();
+        OptionPanicException exc = assertThrows(OptionPanicException.class, () -> n.expect("EXPECT_MSG"));
+        assertEquals("EXPECT_MSG", exc.getMessage());
+        assertNull(exc.getCause(), "Expected no cause for Option.expect()");
+    }
+
+    @Test
+    void unwrap() {
+        assertEquals(314, assertDoesNotThrow(() -> getSome().unwrap()));
+        OptionPanicException exc = assertThrows(OptionPanicException.class, getNone()::unwrap);
+        assertEquals("Option.unwrap() got None value", exc.getMessage());
+        assertNull(exc.getCause(), "Expected no cause for Option.unwrap()");
     }
 }

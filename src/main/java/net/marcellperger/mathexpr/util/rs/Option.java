@@ -76,14 +76,16 @@ public sealed interface Option<T> extends Iterable<T> {
             case None() -> defaultFn.get();
         };
     }
-    default Option<T> mapErr(Runnable noneFn) {  // there is nothing to map from or to (None -> None)!
+    // there is nothing to map from or to (None -> None)! so this is Runnable
+    // so this is the same as inspectErr. It's here for consistency with Result
+    default Option<T> mapErr(Runnable noneFn) {
         if(isNone()) noneFn.run();
         return this;
     }
 
     // not Rust functions, but provides more logical argument order
     // (if/else vs else/if) than mapOrElse
-    default void ifThenElse(Consumer<? super T> someFn, Runnable noneFn) {
+    default void ifThenElse_void(Consumer<? super T> someFn, Runnable noneFn) {
         mapOrElse(Util.runnableToSupplier(noneFn), Util.consumerToFunction(someFn));
     }
     default <U> U ifThenElse(Function<? super T, ? extends U> someFn, Supplier<? extends U> noneFn) {
@@ -116,4 +118,23 @@ public sealed interface Option<T> extends Iterable<T> {
     default void forEach(Consumer<? super T> action) {
         map(Util.consumerToFunction(action));
     }
+
+    default T unwrapOr(T default_) {
+        return unwrapOrElse(() -> default_);
+    }
+    default T unwrapOrElse(Supplier<? extends T> ifNone) {
+        return mapOrElse(ifNone, Function.identity());
+    }
+    // no unwrap_or_default (see Result.java for big explanation)
+    default T expect(String msg) {
+        return unwrapOrElse(() -> {
+            throw new OptionPanicException(msg);
+        });
+    }
+    default T unwrap() {
+        return expect("Option.unwrap() got None value");
+    }
+    // no insert / get_or_insert(_*) / take(_if) / replace
+    // (as record is immutable in Java)
+    // TODO unwrap, check Rust docs
 }
