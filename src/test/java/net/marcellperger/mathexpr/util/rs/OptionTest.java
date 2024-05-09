@@ -90,6 +90,16 @@ class OptionTest {
     }
 
     @Test
+    void mapErr() {
+        MockedRunnable mRunnable = new MockedRunnable();
+        assertEquals(getNone(), getNone().mapErr(mRunnable));
+        mRunnable.assertCalledOnce();
+        mRunnable.reset();
+        assertEquals(getSome(), getSome().mapErr(mRunnable));
+        mRunnable.assertNotCalled();
+    }
+
+    @Test
     void ifThenElse() {
         MockedSupplier<Integer> mSupplier = new MockedSupplier<>(-6);
         MockedFunction<Integer, Integer> mfAdd1 = new MockedFunction<>(i -> i + 1);
@@ -328,5 +338,11 @@ class OptionTest {
         assertEquals(getSome(), getSome().xor(getNone()));
         assertEquals(getSome(), getNone().xor(getSome()));
         assertEquals(getNone(), getNone().xor(getNone()));
+    }
+
+    @Test
+    void test_toString() {
+        assertEquals("Some(314)", getSome().toString());
+        assertEquals("None", getNone().toString());
     }
 }
