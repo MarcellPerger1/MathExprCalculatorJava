@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public sealed interface Option<T> extends Iterable<T> {
+    // hashCode, equals are automatically implemented for `record`s
     record Some<T>(T value) implements Option<T> {
         @Contract(pure = true)
         @Override
@@ -169,7 +170,16 @@ public sealed interface Option<T> extends Iterable<T> {
         };
     }
 
+    default Option<T> xor(Option<T> right) {
+        return switch (this) {  // I wish this implementation was more elegant
+            case Some<T> left -> right.isNone() ? left : newNone();
+            case None() -> right;
+        };
+    }
+
     // no insert / get_or_insert(_*) / take(_if) / replace
-    // (as record is immutable in Java)
-    // TODO check Rust docs
+    //  (as record is immutable in Java)
+    // no (un)zip(_with) because no tuples  in Java (will do if needed tho)
+    // rest are `impl`s on compound types which Java can't do
+    //  (see Result.java for detailed explanation), can do static method if we need it so much
 }

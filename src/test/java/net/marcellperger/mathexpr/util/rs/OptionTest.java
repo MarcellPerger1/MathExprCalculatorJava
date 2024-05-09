@@ -298,7 +298,7 @@ class OptionTest {
     void or() {
         assertEquals(getSome(), getSome().or(Option.newSome(271)));
         assertEquals(getSome(), getSome().or(getNone()));
-        assertEquals(Option.newSome(271), getNone().or(Option.newSome(271)));
+        assertEquals(getSome(), getNone().or(getSome()));
         assertEquals(getNone(), getNone().or(getNone()));
     }
 
@@ -320,5 +320,13 @@ class OptionTest {
             assertEquals(Option.newNone(), getNone().orElse(mNone));
             mNone.assertCalledOnce();
         }
+    }
+
+    @Test
+    void xor() {
+        assertEquals(getNone(), getSome().xor(Option.newSome(271)));
+        assertEquals(getSome(), getSome().xor(getNone()));
+        assertEquals(getSome(), getNone().xor(getSome()));
+        assertEquals(getNone(), getNone().xor(getNone()));
     }
 }
