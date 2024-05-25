@@ -110,7 +110,9 @@ public sealed interface Result<T, E> extends Iterable<T> {
     }
 
     // not a Rust function. Similar to mapOrElse but reversed arguments
-    default void ifThenElse(Consumer<? super T> okFn, Consumer<? super E> errFn) {
+    default void ifThenElse_void(Consumer<? super T> okFn, Consumer<? super E> errFn) {
+        // This _void variant exists (instead of an overload) to avoid Java complaining
+        // about ambiguous arguments when passing method references
         mapOrElse(Util.consumerToFunction(errFn), Util.consumerToFunction(okFn));
     }
     default <U> U ifThenElse(Function<? super T, ? extends U> okFn, Function<? super E, ? extends U> errFn) {

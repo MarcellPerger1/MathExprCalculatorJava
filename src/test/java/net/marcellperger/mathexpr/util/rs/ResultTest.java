@@ -124,18 +124,18 @@ class ResultTest {
     }
 
     @Test
-    void ifThenElse_consumer() {
+    void ifThenElse_void() {
         MockedConsumer<Integer> intConsumer = new MockedConsumer<>();
         MockedConsumer<String> strConsumer = new MockedConsumer<>();
         {
-            getOk().ifThenElse(intConsumer, strConsumer);
+            getOk().ifThenElse_void(intConsumer, strConsumer);
             intConsumer.assertCalledOnceWith(314);
             strConsumer.assertNotCalled();
         }
         intConsumer.reset();
         strConsumer.reset();
         {
-            getErr().ifThenElse(intConsumer, strConsumer);
+            getErr().ifThenElse_void(intConsumer, strConsumer);
             intConsumer.assertNotCalled();
             strConsumer.assertCalledOnceWith("TESTING_ERROR");
         }
