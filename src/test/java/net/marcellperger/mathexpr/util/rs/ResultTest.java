@@ -1,8 +1,7 @@
 package net.marcellperger.mathexpr.util.rs;
 
-import net.marcellperger.mathexpr.util.rs.Result.Ok;
 import net.marcellperger.mathexpr.util.rs.Result.Err;
-import org.jetbrains.annotations.NotNull;
+import net.marcellperger.mathexpr.util.rs.Result.Ok;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -430,18 +429,5 @@ class ResultTest {
     void errOpt() {
         assertEquals(Optional.empty(), getOk().errOpt());
         assertEquals(Optional.of(new Err<>("TESTING_ERROR")), getErr().errOpt());
-    }
-
-    void x(@NotNull Object arg) {
-        System.out.println("arg = " + arg);
-    }
-    @Test
-    void whatDoesNotNullDoOnCI() {
-        try {
-            x(null);
-        } catch (IllegalArgumentException e) {
-            fail("It checks for @NotNull", e);
-        }
-        fail("It does not check @NotNull");
     }
 }
