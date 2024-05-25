@@ -91,8 +91,6 @@ public sealed interface Result<T, E> extends Iterable<T> {
         };
     }
 
-    // TODO: once Option is done, do proper ok() / err() -> Option<T / E>
-
     default <U> Result<U, E> map(Function<? super T, ? extends U> op) {
         return switch (this) {
             case Ok(T value) -> new Ok<>(op.apply(value));

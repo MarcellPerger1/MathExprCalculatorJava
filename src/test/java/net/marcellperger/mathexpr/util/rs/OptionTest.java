@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -342,5 +343,17 @@ class OptionTest {
     void test_toString() {
         assertEquals("Some(314)", getSome().toString());
         assertEquals("None", getNone().toString());
+    }
+
+    @Test
+    void ofOptional() {
+        assertEquals(Option.newSome(314), Option.ofOptional(Optional.of(314)));
+        assertEquals(Option.newNone(), Option.ofOptional(Optional.empty()));
+    }
+
+    @Test
+    void ofNullable() {
+        assertEquals(Option.newSome(314), Option.ofNullable(314));
+        assertEquals(Option.newNone(), Option.ofNullable(null));
     }
 }

@@ -3,9 +3,11 @@ package net.marcellperger.mathexpr.util.rs;
 import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -44,6 +46,14 @@ public sealed interface Option<T> extends Iterable<T> {
     @Contract(" -> new")
     static <T> @NotNull Option<T> newNone() {
         return new None<>();
+    }
+
+    static <T> Option<@NotNull T> ofNullable(@Nullable T value) {
+        return ofOptional(Optional.ofNullable(value));
+    }
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    static <T> Option<T> ofOptional(Optional<T> value) {
+        return value.map(Option::newSome).orElse(newNone());
     }
 
     default boolean isSome() {
