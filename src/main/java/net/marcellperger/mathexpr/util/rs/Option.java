@@ -35,13 +35,14 @@ public sealed interface Option<T> extends Iterable<T> {
         }
     }
 
+    // Same as new Some/None but return Option
     @Contract("_ -> new")
-    static <T> @NotNull Some<T> newSome(T value) {
+    static <T> @NotNull Option<T> newSome(T value) {
         return new Some<>(value);
     }
 
     @Contract(" -> new")
-    static <T> @NotNull None<T> newNone() {
+    static <T> @NotNull Option<T> newNone() {
         return new None<>();
     }
 

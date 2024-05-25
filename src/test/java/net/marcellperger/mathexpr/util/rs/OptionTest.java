@@ -1,8 +1,6 @@
 package net.marcellperger.mathexpr.util.rs;
 
 import net.marcellperger.mathexpr.MiniMock.*;
-import net.marcellperger.mathexpr.util.rs.Option.Some;
-import net.marcellperger.mathexpr.util.rs.Option.None;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -12,10 +10,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class OptionTest {
-    Some<Integer> getSome() {
+    Option<Integer> getSome() {
         return Option.newSome(314);
     }
-    None<Integer> getNone() {
+    Option<Integer> getNone() {
         return Option.newNone();
     }
 

@@ -43,10 +43,11 @@ public sealed interface Result<T, E> extends Iterable<T> {
         }
     }
 
-    static <T, E> Ok<T, E> newOk(T value) {
+    // same as new Ok/Err but return Option
+    static <T, E> Result<T, E> newOk(T value) {
         return new Ok<>(value);
     }
-    static <T, E> Err<T, E> newErr(E err) {
+    static <T, E> Result<T, E> newErr(E err) {
         return new Err<>(err);
     }
 
