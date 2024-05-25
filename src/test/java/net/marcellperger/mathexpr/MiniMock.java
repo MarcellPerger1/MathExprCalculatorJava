@@ -4,6 +4,7 @@ import net.marcellperger.mathexpr.util.VoidVal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -11,13 +12,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.junit.jupiter.api.Assertions;
-
 public class MiniMock {
-    enum ReturnStrategy {
-        VALUE, FUNC
-    }
-
     public static class BaseMockedCallable<A> {
         List<A> calls;
 
@@ -42,97 +37,57 @@ public class MiniMock {
         }
     }
 
-    // TODO there is SO much shared code between these Mocked* classes
     public static class MockedSupplier<R> extends BaseMockedCallable<VoidVal> implements Supplier<R> {
-        // Option<T> would be so useful right now
-        R returnValue;
         Supplier<R> returnSupplier;
-        ReturnStrategy returnStrategy;
 
         public MockedSupplier(R returnValue_) {
-            calls = new ZST_List();
-            returnValue = returnValue_;
-            returnStrategy = ReturnStrategy.VALUE;
+            this(() -> returnValue_);
         }
         public MockedSupplier(Supplier<R> returnSupplier_) {
             calls = new ZST_List();
             returnSupplier = returnSupplier_;
-            returnStrategy = ReturnStrategy.FUNC;
-        }
-
-        protected R getReturn() {
-            return switch (returnStrategy) {
-                case VALUE -> returnValue;
-                case FUNC -> returnSupplier.get();
-            };
         }
 
         @Override
         public R get() {
             handleCall(VoidVal.val());
-            return getReturn();
+            return returnSupplier.get();
         }
     }
 
     public static class MockedFunction<T, R> extends BaseMockedCallable<T> implements Function<T, R> {
-        // Option<T> would be so useful right now
-        R returnValue;
         Function<? super T, ? extends R> returnFunc;
-        ReturnStrategy returnStrategy;
 
         public MockedFunction(R returnValue_) {
-            calls = new ArrayList<>();
-            returnValue = returnValue_;
-            returnStrategy = ReturnStrategy.VALUE;
+            this((_v) -> returnValue_);
         }
         public MockedFunction(Function<? super T, ? extends R> returnSupplier_) {
             calls = new ArrayList<>();
             returnFunc = returnSupplier_;
-            returnStrategy = ReturnStrategy.FUNC;
-        }
-
-        protected R getReturn(T arg) {
-            return switch (returnStrategy) {
-                case VALUE -> returnValue;
-                case FUNC -> returnFunc.apply(arg);
-            };
         }
 
         @Override
         public R apply(T arg) {
             handleCall(arg);
-            return getReturn(arg);
+            return returnFunc.apply(arg);
         }
     }
 
     public static class MockedPredicate<T> extends BaseMockedCallable<T> implements Predicate<T> {
-        // Option<T> would be so useful right now
-        boolean returnValue;
         Predicate<? super T> returnFunc;
-        ReturnStrategy returnStrategy;
 
         public MockedPredicate(boolean returnValue_) {
-            calls = new ArrayList<>();
-            returnValue = returnValue_;
-            returnStrategy = ReturnStrategy.VALUE;
+            this((_v) -> returnValue_);
         }
         public MockedPredicate(Predicate<? super T> returnSupplier_) {
             calls = new ArrayList<>();
             returnFunc = returnSupplier_;
-            returnStrategy = ReturnStrategy.FUNC;
-        }
-
-        protected boolean getReturn(T arg) {
-            return switch (returnStrategy) {
-                case VALUE -> returnValue;
-                case FUNC -> returnFunc.test(arg);
-            };
         }
 
         @Override
         public boolean test(T arg) {
             handleCall(arg);
-            return getReturn(arg);
+            return returnFunc.test(arg);
         }
     }
 
