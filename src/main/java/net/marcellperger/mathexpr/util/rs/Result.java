@@ -68,6 +68,12 @@ public sealed interface Result<T, E> extends Iterable<T> {
     default Optional<Ok<T, E>> okOpt() { return Optional.ofNullable(ok()); }
     default Optional<Err<T, E>> errOpt() { return Optional.ofNullable(err()); }
 
+    default Option<T> okOption() {
+        return mapOr(Option.newNone(), Option::newSome);
+    }
+    default Option<E> errOption() {
+        return ifThenElse(_ok -> Option.newNone(), Option::newSome);
+    }
 
     default boolean isOk() { return ok() != null; }
     default boolean isErr() { return err() != null; }

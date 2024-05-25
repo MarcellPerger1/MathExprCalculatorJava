@@ -430,4 +430,16 @@ class ResultTest {
         assertEquals(Optional.empty(), getOk().errOpt());
         assertEquals(Optional.of(new Err<>("TESTING_ERROR")), getErr().errOpt());
     }
+
+    @Test
+    void okOption() {
+        assertEquals(Option.newSome(314), getOk().okOption());
+        assertEquals(Option.newNone(), getErr().okOption());
+    }
+
+    @Test
+    void errOption() {
+        assertEquals(Option.newNone(), getOk().errOption());
+        assertEquals(Option.newSome("TESTING_ERROR"), getErr().errOption());
+    }
 }
