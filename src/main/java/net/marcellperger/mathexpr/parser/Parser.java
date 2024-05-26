@@ -3,6 +3,7 @@ package net.marcellperger.mathexpr.parser;
 import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Pair;
 import net.marcellperger.mathexpr.util.Util;
+import net.marcellperger.mathexpr.util.rs.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -61,6 +62,22 @@ public class Parser {
             return null;
         }
         return new BasicDoubleSymbol(value);
+    }
+    public @NotNull Result<MathSymbol, Throwable> parseDoubleLiteral_result() {
+        discardWhitespace();
+        Matcher m = DOUBLE_RE.matcher(strFromHere());
+        if (!m.lookingAt()) return Result.fromExc(new ExprParseException("Invalid number"));
+        String s = m.group();
+        idx += s.length();
+        double value;
+        try {
+            value = Double.parseDouble(s);
+        } catch (NumberFormatException exc) {
+            // Technically this should never happen - assuming I've got that regex right
+            throw new AssertionError(
+                "There is a problem with the regex, this should've been rejected earlier", exc);
+        }
+        return Result.newOk(new BasicDoubleSymbol(value));
     }
 
     public @Nullable MathSymbol parseParensOrLiteral() throws ExprParseException {
