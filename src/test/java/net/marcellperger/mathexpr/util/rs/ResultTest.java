@@ -4,10 +4,7 @@ import net.marcellperger.mathexpr.util.rs.Result.Err;
 import net.marcellperger.mathexpr.util.rs.Result.Ok;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static net.marcellperger.mathexpr.MiniMock.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -478,5 +475,43 @@ class ResultTest {
         public UnexpectedCheckedCustomException(String message) {
             super(message);
         }
+    }
+
+    @Test
+    void fromExc() {
+        CheckedCustomException cce = new CheckedCustomException("Message");
+        Result<Object, CheckedCustomException> result = inner0(cce);
+        CheckedCustomException cceOut = result.expectErr("fromExc() didn't return Err value");
+        assertEquals(cce, cceOut);
+
+        StackTraceElement currFrame = getCurrentStack();
+        List<StackTraceElement> st = Arrays.stream(cceOut.getStackTrace())
+            .filter(f -> f.getClassName().equals(currFrame.getClassName()))
+            .filter(f -> Objects.equals(f.getFileName(), currFrame.getFileName()))
+            .filter(f -> Objects.equals(f.getModuleName(), currFrame.getModuleName()))
+            .filter(f -> Objects.equals(f.getModuleVersion(), currFrame.getModuleVersion()))
+            .filter(f -> Objects.equals(f.getClassLoaderName(), currFrame.getClassLoaderName()))
+            .toList();
+        List<StackTraceElement> i0 = st.stream()
+            .filter(f -> f.getMethodName().equals("inner0"))
+            .toList();
+        assertEquals(1, i0.size(), "Expected exactly 1 inner0 frame");
+        List<StackTraceElement> i1 = st.stream()
+            .filter(f -> f.getMethodName().equals("inner0"))
+            .toList();
+        assertEquals(1, i1.size(), "Expected exactly 1 inner1 frame");
+    }
+
+    private StackTraceElement getCurrentStack() {
+        return StackWalker.getInstance()
+            .walk(s -> /*Skip this methods*/s.skip(1).findFirst())
+            .orElseThrow().toStackTraceElement();
+    }
+
+    private Result<Object, CheckedCustomException> inner0(CheckedCustomException exc) {
+        return inner1(exc);
+    }
+    private Result<Object, CheckedCustomException> inner1(CheckedCustomException exc) {
+        return Result.fromExc(exc);
     }
 }

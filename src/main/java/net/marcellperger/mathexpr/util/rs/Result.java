@@ -1,5 +1,6 @@
 package net.marcellperger.mathexpr.util.rs;
 
+import net.marcellperger.mathexpr.util.JacocoIgnoreNotGenerated;
 import net.marcellperger.mathexpr.util.ThrowingSupplier;
 import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.NotNull;
@@ -52,17 +53,30 @@ public sealed interface Result<T, E> extends Iterable<T> {
         return new Err<>(err);
     }
 
+    /** Same as fromExc but also fills in the stack trace using
+     * {@link Throwable#fillInStackTrace()} for more useful error messages */
+    static <T, E extends Throwable> @NotNull Result<T, E> fromExc(@NotNull E exc) {
+        exc.fillInStackTrace();
+        return newErr(exc);
+    }
+
     static <T, E extends Throwable> Result<T, E> fromTry(ThrowingSupplier<? extends T, E> inner, Class<E> catchThis) {
         try {
             return newOk(inner.get());
         } catch (Throwable exc) {
-            try {
-                return newErr(catchThis.cast(exc));
-            } catch (ClassCastException c) {
-                // We've handled E, so only unchecked exceptions should reach here
-                // so it's safe to throw them (but Java doesn't know that so we trick it)
-                return Util.throwAsUnchecked(exc);
-            }
+            return _makeErrTypeOrFailUnchecked(exc, catchThis);
+        }
+    }
+
+    @NotNull
+    @JacocoIgnoreNotGenerated
+    private static <T, E extends Throwable> Result<T, E> _makeErrTypeOrFailUnchecked(Throwable exc, Class<E> catchThis) {
+        try {
+            return newErr(catchThis.cast(exc));
+        } catch (ClassCastException c) {
+            // We've handled E, so only unchecked exceptions should reach here
+            // so it's safe to throw them (but Java doesn't know that so we trick it)
+            return Util.throwAsUnchecked(exc);  // Jacoco doesn't realize that the `return` is unreachable
         }
     }
 
