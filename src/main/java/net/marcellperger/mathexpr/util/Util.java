@@ -257,4 +257,28 @@ public class Util {
             return VoidVal.val();
         };
     }
+
+    // These 2 trick Java into throwing checked exceptions in an unchecked way
+    @Contract("_ -> fail")
+    public static <T> T throwAsUnchecked(Throwable exc) {
+        throwAs(exc);  // <RuntimeException> is inferred from no `throws` clause
+        // Java doesn't know that this always throws so this lets us
+        // do `return/throw throwAsUnchecked()` to make Java's flow control analyser happy
+        throw new AssertionError("Unreachable");
+    }
+    @SuppressWarnings("unchecked")
+    @Contract("_ -> fail")
+    public static <E extends Throwable> void throwAs(Throwable exc) throws E {
+        // We do a little type erasure hack to trick Java:
+        //  - E will be type-erased to Throwable so this will become
+        //       throw (Throwable)exc;
+        //     but exc is already Throwable due to the param type so
+        //     this is like a runtime no-op.
+        //  - But javac will see that we're throwing an E which is allowed!
+        //  - The reason we need a separate method is so that there is a
+        //     generic for javac to type-erase (otherwise JVM would check that
+        //     it's actually that concrete type when it is thrown and this way
+        //     it only checks for the base condition)
+        throw (E)exc;
+    }
 }

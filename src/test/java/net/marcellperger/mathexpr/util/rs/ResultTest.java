@@ -442,4 +442,41 @@ class ResultTest {
         assertEquals(Option.newNone(), getOk().errOption());
         assertEquals(Option.newSome("TESTING_ERROR"), getErr().errOption());
     }
+
+    @SuppressWarnings("CommentedOutCode")
+    @Test
+    void fromTry() {
+        assertEquals(Result.newOk(314), Result.fromTry(() -> 314, CustomException.class));
+        CustomException ce = new CustomException("Unchecked (expected) exception");
+        CheckedCustomException cce = new CheckedCustomException("Checked (expected) exception");
+        assertEquals(Result.newErr(cce), Result.fromTry(() -> {throw cce;}, CheckedCustomException.class));
+        assertEquals(Result.newErr(ce), Result.fromTry(() -> {throw ce;}, CustomException.class));
+        UnexpectedCustomException uce = new UnexpectedCustomException("Unexpected unchecked exc");
+        assertThrows(UnexpectedCustomException.class, () -> Result.fromTry(() -> {throw uce;}, CustomException.class));
+        // This doesn't compile so GOOD! (How do I write a test that something DOESN'T compile???)
+        // UnexpectedCheckedCustomException ucc = new UnexpectedCheckedCustomException("Unexpected checked exc");
+        // assertThrows(UnexpectedCheckedCustomException.class, () -> Result.fromTry(() -> {throw ucc;}, CheckedCustomException.class));
+    }
+
+    static class UnexpectedCustomException extends RuntimeException {
+        public UnexpectedCustomException(String message) {
+            super(message);
+        }
+    }
+    static class CustomException extends RuntimeException {
+        public CustomException(String message) {
+            super(message);
+        }
+    }
+    static class CheckedCustomException extends Exception {
+        public CheckedCustomException(String message) {
+            super(message);
+        }
+    }
+    @SuppressWarnings("unused")  // used in the does-not-compile test
+    static class UnexpectedCheckedCustomException extends Exception {
+        public UnexpectedCheckedCustomException(String message) {
+            super(message);
+        }
+    }
 }

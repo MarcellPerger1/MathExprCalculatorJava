@@ -1,5 +1,6 @@
 package net.marcellperger.mathexpr.util.rs;
 
+import net.marcellperger.mathexpr.util.ThrowingSupplier;
 import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,19 @@ public sealed interface Result<T, E> extends Iterable<T> {
         return new Err<>(err);
     }
 
+    static <T, E extends Throwable> Result<T, E> fromTry(ThrowingSupplier<? extends T, E> inner, Class<E> catchThis) {
+        try {
+            return newOk(inner.get());
+        } catch (Throwable exc) {
+            try {
+                return newErr(catchThis.cast(exc));
+            } catch (ClassCastException c) {
+                // We've handled E, so only unchecked exceptions should reach here
+                // so it's safe to throw them (but Java doesn't know that so we trick it)
+                return Util.throwAsUnchecked(exc);
+            }
+        }
+    }
 
     default @Nullable Ok<T, E> ok() {
         return switch (this) {
