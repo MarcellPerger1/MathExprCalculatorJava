@@ -158,6 +158,13 @@ public sealed interface Result<T, E> extends Iterable<T> {
         return mapErr(Util.consumerToIdentityFunc(f));
     }
 
+    default Result<T, E> runIfOk(Consumer<? super T> f) {
+        return map(Util.consumerToIdentityFunc(f));
+    }
+    default Result<T, E> runIfErr(Consumer<? super E> f) {
+        return mapErr(Util.consumerToIdentityFunc(f));
+    }
+
     // .iter()-esque methods: why does Java have SO MANY - one is enough.
     default Stream<T> stream() {
         return okOpt().map(Ok::value).stream();

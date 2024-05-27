@@ -3,6 +3,8 @@ package net.marcellperger.mathexpr.parser;
 import net.marcellperger.mathexpr.*;
 import net.marcellperger.mathexpr.util.Pair;
 import net.marcellperger.mathexpr.util.Util;
+import net.marcellperger.mathexpr.util.VoidVal;
+import net.marcellperger.mathexpr.util.rs.Option;
 import net.marcellperger.mathexpr.util.rs.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +14,10 @@ import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +41,14 @@ public class Parser {
 
     public MathSymbol parseExpr() throws ExprParseException {
         return parseInfixPrecedenceLevel(SymbolInfo.MAX_PRECEDENCE);
+    }
+    public Result<MathSymbol, ExprParseException> parseExpr_result() {
+        // TODO do this better
+        try {
+            return Result.newOk(parseInfixPrecedenceLevel(SymbolInfo.MAX_PRECEDENCE));
+        } catch (ExprParseException e) {
+            return Result.newErr(e);
+        }
     }
 
     // https://regex101.com/r/2EogTA/1
@@ -63,21 +76,27 @@ public class Parser {
         }
         return new BasicDoubleSymbol(value);
     }
-    public @NotNull Result<MathSymbol, Throwable> parseDoubleLiteral_result() {
+    public @NotNull Result<MathSymbol, ExprParseException> parseDoubleLiteral_result() {
         discardWhitespace();
-        Matcher m = DOUBLE_RE.matcher(strFromHere());
-        if (!m.lookingAt()) return Result.fromExc(new ExprParseException("Invalid number"));
-        String s = m.group();
-        idx += s.length();
-        double value;
-        try {
-            value = Double.parseDouble(s);
-        } catch (NumberFormatException exc) {
-            // Technically this should never happen - assuming I've got that regex right
-            throw new AssertionError(
-                "There is a problem with the regex, this should've been rejected earlier", exc);
-        }
-        return Result.newOk(new BasicDoubleSymbol(value));
+        return matchNextRegexString(DOUBLE_RE, "Invalid number").andThen(s -> {
+            try {
+                return Result.newOk(new BasicDoubleSymbol(Double.parseDouble(s)));
+            } catch (NumberFormatException exc) {
+                throw new AssertionError("There is a problem with the regex," +
+                    " this should've been rejected earlier", exc);
+            }
+        });
+    }
+
+    public @NotNull Result<MathSymbol, ExprParseException> parseParensOrLiteral_result() {
+        discardWhitespace();
+        return peek() == '(' ? parseParens_result() : parseDoubleLiteral_result();
+    }
+
+    public @NotNull Result<MathSymbol, ExprParseException> parseParens_result() {
+        return advanceExpectNext_ignoreWs_result('(')
+            .andThen(_c -> parseExpr_result())
+            .runIfOk(_sym -> advanceExpectNext_ignoreWs_result(')'));
     }
 
     public @Nullable MathSymbol parseParensOrLiteral() throws ExprParseException {
@@ -95,6 +114,24 @@ public class Parser {
         return sym;
     }
 
+//    public Result<MathSymbol, ExprParseException> parseInfixPrecedenceLevel_result(int level) {
+//        discardWhitespace();
+//        if(level == 0) return parseParensOrLiteral_result();
+//        PrecedenceLevelInfo precInfo = SymbolInfo.PREC_LEVELS_INFO.get(level);
+//        if (precInfo == null) return parseInfixPrecedenceLevel_result(level - 1);  // fallthrough empty levels
+//        return parseInfixPrecedenceLevel_result(level - 1).andThen(left -> switch (precInfo.dirn) {
+//            case LeftToRight -> parseInfixPrecedenceLevel_LTR(left, precInfo);
+//            case RightToLeft -> parseInfixPrecedenceLevel_RTL(left, precInfo);
+//            case null -> parseInfixPrecedenceLevel_noDirn(left, precInfo);
+//        });
+////        MathSymbol left = parseInfixPrecedenceLevel(level - 1);
+////        return switch (precInfo.dirn) {
+////            case LeftToRight -> parseInfixPrecedenceLevel_LTR(left, precInfo);
+////            case RightToLeft -> parseInfixPrecedenceLevel_RTL(left, precInfo);
+////            case null -> parseInfixPrecedenceLevel_noDirn(left, precInfo);
+////        };
+//    }
+
     public MathSymbol parseInfixPrecedenceLevel(int level) throws ExprParseException {
         discardWhitespace();
         if(level == 0) return parseParensOrLiteral();
@@ -106,6 +143,22 @@ public class Parser {
             case RightToLeft -> parseInfixPrecedenceLevel_RTL(left, precInfo);
             case null -> parseInfixPrecedenceLevel_noDirn(left, precInfo);
         };
+    }
+
+    private Result<MathSymbol, ExprParseException> parseInfixPrecedenceLevel_RTL_result(MathSymbol left, PrecedenceLevelInfo precInfo) {
+        return Result.fromTry(() -> {
+            String op;
+            List<Pair<SymbolInfo, MathSymbol>> otherOps = new ArrayList<>();
+            while((op = discardMatchesNextAny_optionsSorted_removeWs(precInfo.sortedInfixes)) != null) {
+                otherOps.add(new Pair<>(
+                    Util.getNotNull(precInfo.infixToSymbolMap, op),
+                    parseInfixPrecedenceLevel(precInfo.precedence - 1)));
+            }
+            return otherOps.reversed().stream().reduce((rightpair, leftpair) ->
+                leftpair.asVars((preOp, argL) ->
+                    new Pair<>(preOp, rightpair.asVars((midOp, argR) -> BinaryOperation.construct(argL, midOp, argR))))
+            ).map(p -> p.asVars((midOp, argR) -> BinaryOperation.construct(left, midOp, argR))).orElse(left);
+        }, ExprParseException.class);
     }
 
     private MathSymbol parseInfixPrecedenceLevel_RTL(MathSymbol left, PrecedenceLevelInfo precInfo) throws ExprParseException {
@@ -192,11 +245,43 @@ public class Parser {
         discardWhitespace();
         advanceExpectNext(expected);
     }
+    protected Result<Character, ExprParseException> advanceExpectNext_ignoreWs_result(char expected) {
+        discardWhitespace();
+        return advanceExpectNext_result(expected);
+    }
+    protected Result<Character, ExprParseException> advanceExpectNext_result(char expected) {
+        char actual = advance();
+        if (actual == expected) return Result.newOk(actual);
+        return Result.newErr(new ExprParseException("Expected '%c', got '%c'".formatted(expected, actual)));
+    }
+
+    protected Result<MatchResult, ExprParseException> matchNextRegexResult(@NotNull Pattern pat, ExprParseException exc) {
+        Matcher m = pat.matcher(strFromHere());
+        if (!m.lookingAt()) return Result.fromExc(exc);
+        String s = m.group();
+        idx += s.length();
+        return Result.newOk(m.toMatchResult());
+    }
+    protected Result<MatchResult, ExprParseException> matchNextRegexResult(@NotNull Pattern pat, String exc) {
+        return matchNextRegexResult(pat, new ExprParseException(exc));
+    }
+    protected Result<MatchResult, ExprParseException> matchNextRegexResult(@NotNull Pattern pat) {
+        return matchNextRegexResult(pat, "Regex should've been matched");
+    }
+    protected Result<String, ExprParseException> matchNextRegexString(@NotNull Pattern pat, ExprParseException exc) {
+        return matchNextRegexResult(pat, exc).map(MatchResult::group);
+    }
+    protected Result<String, ExprParseException> matchNextRegexString(@NotNull Pattern pat, String msg) {
+        return matchNextRegexResult(pat, msg).map(MatchResult::group);
+    }
+    protected Result<String, ExprParseException> matchNextRegexString(@NotNull Pattern pat) {
+        return matchNextRegexResult(pat).map(MatchResult::group);
+    }
 
     protected boolean matchesNext(@NotNull String expected) {
         return src.startsWith(expected, /*start*/idx);
     }
-    
+
     private @NotNull List<@NotNull String> sortedByLength(@NotNull List<@NotNull String> arr) {
         return arr.stream().sorted(Comparator.comparingInt(String::length).reversed()).toList();
     }
