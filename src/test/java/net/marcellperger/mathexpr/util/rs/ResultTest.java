@@ -177,6 +177,26 @@ class ResultTest {
     }
 
     @Test
+    void runIfOk() {
+        MockedConsumer<Integer> intCons = new MockedConsumer<>();
+        assertEquals(getOk(), getOk().runIfOk(intCons));
+        intCons.assertCalledOnceWith(314);
+        intCons.reset();
+        assertEquals(getErr(), getErr().runIfOk(intCons));
+        intCons.assertNotCalled();
+    }
+
+    @Test
+    void runIfErr() {
+        MockedConsumer<String> strCons = new MockedConsumer<>();
+        assertEquals(getErr(), getErr().runIfErr(strCons));
+        strCons.assertCalledOnceWith("TESTING_ERROR");
+        strCons.reset();
+        assertEquals(getOk(), getOk().runIfErr(strCons));
+        strCons.assertNotCalled();
+    }
+
+    @Test
     void stream() {
         assertEquals(List.of(314), getOk().stream().toList());
         assertEquals(List.of(), getErr().stream().toList());
