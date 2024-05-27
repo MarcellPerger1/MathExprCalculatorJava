@@ -7,8 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 @SuppressWarnings("unused")
 public class Util {
@@ -56,13 +59,11 @@ public class Util {
         return obj;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     @Contract("_ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmpty(@NotNull C collection) {
         if(collection.isEmpty()) throw new CollectionSizeException("Argument must not be empty");
         return collection;
     }
-    @SuppressWarnings("UnusedReturnValue")
     @Contract("null -> fail; _ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection) {
         return requireNonEmpty(Objects.requireNonNull(collection));
@@ -72,7 +73,6 @@ public class Util {
         if(collection.isEmpty()) throw new CollectionSizeException(msg);
         return collection;
     }
-    @SuppressWarnings("UnusedReturnValue")
     @Contract("null, _ -> fail; _, _ -> param1")
     public static <C extends Collection<?>> @NotNull C requireNonEmptyNonNull(C collection, String msg) {
         return requireNonEmpty(Objects.requireNonNull(collection), msg);
@@ -193,5 +193,92 @@ public class Util {
 
     public static <K, V> @NotNull V getNotNull(@NotNull Map<K, V> map, K key) {
         return Objects.requireNonNull(map.get(key));
+    }
+
+    @Contract(value = "_ -> new", pure = true)
+    public static <T> @NotNull Iterator<T> singleItemIterator(T value) {
+        return new SingleItemIterator<>(value);
+    }
+
+    protected static class SingleItemIterator<T> implements Iterator<T> {
+        T value;
+        boolean isAtEnd;
+
+        public SingleItemIterator(T value) {
+            this.value = value;
+            isAtEnd = false;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !isAtEnd;
+        }
+
+        @Override
+        public T next() {
+            if(isAtEnd) throw new NoSuchElementException("End of SingleItemIterator reached");
+            return _moveToEndAndPop();
+        }
+
+        protected T _moveToEndAndPop() {
+            isAtEnd = true;
+            T val = value;
+            // Don't hold on to our copy - we don't need it anymore
+            //  as iterators cannot go backwards and this lets JVM free it earlier.
+            value = null;
+            return val;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super T> action) {
+            if(isAtEnd) return;
+            action.accept(_moveToEndAndPop());
+        }
+    }
+
+    @Contract(pure = true)
+    public static <T> @NotNull Function<? super T, VoidVal> consumerToFunction(Consumer<? super T> consumer) {
+        return v -> {
+            consumer.accept(v);
+            return VoidVal.val();
+        };
+    }
+    @Contract(pure = true)
+    public static <T> @NotNull UnaryOperator<T> consumerToIdentityFunc(Consumer<? super T> consumer) {
+        return v -> {
+            consumer.accept(v);
+            return v;
+        };
+    }
+
+    public static @NotNull Supplier<VoidVal> runnableToSupplier(Runnable runnable) {
+        return () -> {
+            runnable.run();
+            return VoidVal.val();
+        };
+    }
+
+    // These 2 trick Java into throwing checked exceptions in an unchecked way
+    @Contract("_ -> fail")
+    public static <T> T throwAsUnchecked(Throwable exc) {
+        throwAs(exc);  // <RuntimeException> is inferred from no `throws` clause
+        // Java doesn't know that this always throws so this lets us
+        // do `return/throw throwAsUnchecked()` to make Java's flow control analyser happy
+        throw new AssertionError("Unreachable");
+    }
+    @SuppressWarnings("unchecked")
+    @Contract("_ -> fail")
+    public static <E extends Throwable> void throwAs(Throwable exc) throws E {
+        // We do a little type erasure hack to trick Java:
+        //  - E will be type-erased to Throwable so this will become
+        //       throw (Throwable)exc;
+        //     but exc is already Throwable due to the param type so
+        //     this is like a runtime no-op.
+        //  - But javac will see that we're throwing an E which is allowed!
+        //  - The reason we need a separate method is so that there is a
+        //     generic for javac to type-erase (otherwise JVM would check that
+        //     it's actually that concrete type when it is thrown and this way
+        //     it only checks for the base condition)
+        throw (E)exc;
     }
 }

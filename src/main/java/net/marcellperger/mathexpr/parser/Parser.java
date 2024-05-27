@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,38 +40,23 @@ public class Parser {
 
     // https://regex101.com/r/2EogTA/1
     protected static final Pattern DOUBLE_RE = Pattern.compile("^([+-]?)(\\d*\\.\\d+|\\d+\\.?)(?:[eE]([+-]?\\d+))?");
-    public @NotNull MathSymbol parseDoubleLiteral_exc() throws ExprParseException {
-        return switch (parseDoubleLiteral_null()) {
-            case null -> throw new ExprParseException("Couldn't parse double in expression");
-            case MathSymbol sym -> sym;
-        };
-    }
-    public @Nullable MathSymbol parseDoubleLiteral_null() {
+    public @NotNull MathSymbol parseDoubleLiteral() throws ExprParseException {
         discardWhitespace();
-        Matcher m = DOUBLE_RE.matcher(strFromHere());
-        if (!m.lookingAt()) return null;
-        String s = m.group();
-        idx += s.length();
-        double value;
+        String s = matchNextRegexString(DOUBLE_RE, "Invalid number (double)");
         try {
-            value = Double.parseDouble(s);
-        } catch (NumberFormatException _exc) {
-            // Technically this should never happen - assuming I've got that regex right
-            assert false: "There is a problem with the regex, this should've been rejected earlier";
-            return null;
+            return new BasicDoubleSymbol(Double.parseDouble(s));
+        } catch (NumberFormatException exc) {
+            throw new AssertionError("There is a problem with the regex," +
+                " this should've been rejected earlier", exc);
         }
-        return new BasicDoubleSymbol(value);
     }
 
-    public @Nullable MathSymbol parseParensOrLiteral() throws ExprParseException {
+    public @NotNull MathSymbol parseParensOrLiteral() throws ExprParseException {
         discardWhitespace();
-        if(peek() == '(') return parseParens();
-        // TODO add a better error handling system - don't want to maintain 2 versions of each function
-        //  returning null: +easier to do unions, +no need for verbose try/catch, -no info about errors
-        return parseDoubleLiteral_null();
+        return peek() == '(' ? parseParens() : parseDoubleLiteral();
     }
 
-    public @Nullable MathSymbol parseParens() throws ExprParseException {
+    public MathSymbol parseParens() throws ExprParseException {
         advanceExpectNext_ignoreWs('(');
         MathSymbol sym = parseExpr();
         advanceExpectNext_ignoreWs(')');
@@ -152,8 +138,7 @@ public class Parser {
      * @param predicate Keep advancing while this returns true
      * @return Amount of spaces advanced
      */
-    @SuppressWarnings("UnusedReturnValue")
-    int advanceWhile(@NotNull Function<Character, Boolean> predicate) {
+    protected int advanceWhile(@NotNull Function<Character, Boolean> predicate) {
         int n = 0;
         while (notEof() && advanceIf(predicate)) ++n;
         return n;
@@ -167,19 +152,45 @@ public class Parser {
         advanceWhile(Character::isWhitespace);
     }
 
-    protected void advanceExpectNext(char expected) {
+    protected void advanceExpectNext(char expected) throws ExprParseException {
         char actual = advance();
-        if(actual != expected) throw new ExprParseRtException("Expected '%c', got '%c'".formatted(expected, actual));
+        if(actual != expected) throw new ExprParseException("Expected '%c', got '%c'".formatted(expected, actual));
     }
-    protected void advanceExpectNext_ignoreWs(char expected) {
+    protected void advanceExpectNext_ignoreWs(char expected) throws ExprParseException {
         discardWhitespace();
         advanceExpectNext(expected);
+    }
+
+    protected MatchResult matchNextRegexResult(@NotNull Pattern pat, ExprParseException exc) throws ExprParseException {
+        Matcher m = pat.matcher(strFromHere());
+        if (!m.lookingAt()) throw exc;
+        String s = m.group();
+        idx += s.length();
+        return m.toMatchResult();
+    }
+    protected MatchResult matchNextRegexResult(@NotNull Pattern pat, String exc) throws ExprParseException {
+        return matchNextRegexResult(pat, new ExprParseException(exc));
+    }
+    protected MatchResult matchNextRegexResult(@NotNull Pattern pat) throws ExprParseException {
+        return matchNextRegexResult(pat, "Regex should've been matched");
+    }
+    @SuppressWarnings("unused")
+    protected String matchNextRegexString(@NotNull Pattern pat, ExprParseException exc) throws ExprParseException {
+        return matchNextRegexResult(pat, exc).group();
+    }
+    @SuppressWarnings("SameParameterValue")
+    protected String matchNextRegexString(@NotNull Pattern pat, String msg) throws ExprParseException {
+        return matchNextRegexResult(pat, msg).group();
+    }
+    @SuppressWarnings("unused")
+    protected String matchNextRegexString(@NotNull Pattern pat) throws ExprParseException {
+        return matchNextRegexResult(pat).group();
     }
 
     protected boolean matchesNext(@NotNull String expected) {
         return src.startsWith(expected, /*start*/idx);
     }
-    
+
     private @NotNull List<@NotNull String> sortedByLength(@NotNull List<@NotNull String> arr) {
         return arr.stream().sorted(Comparator.comparingInt(String::length).reversed()).toList();
     }
