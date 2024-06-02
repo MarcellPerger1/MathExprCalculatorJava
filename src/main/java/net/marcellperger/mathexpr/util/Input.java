@@ -46,7 +46,7 @@ public class Input {
         return sc.nextLine();
     }
     public String getInput(String prompt) {
-        Objects.requireNonNull(ps, "An OutputStream is required to use Input.getInput(prompt)").println(prompt);
+        Objects.requireNonNull(ps, "An OutputStream is required to use Input.getInput(prompt)").print(prompt);
         return sc.nextLine();
     }
 
