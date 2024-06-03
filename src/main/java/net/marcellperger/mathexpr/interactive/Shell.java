@@ -8,6 +8,7 @@ import net.marcellperger.mathexpr.util.MathUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
+import java.util.NoSuchElementException;
 
 public class Shell {
     Input in;
@@ -22,15 +23,22 @@ public class Shell {
         new Shell().run();
     }
 
-    // TODO run() until exit better - parse exit command/Ctrl+C
+    // TODO run() until exit better - parse exit command, more robust/extensible command handling system
 
     public void run() {
-        //noinspection InfiniteLoopStatement
-        while (true) getAndRunCommand();
+        //noinspection StatementWithEmptyBody
+        while (getAndRunCommand()) {}
     }
 
-    public void getAndRunCommand() {
-        runCommand(in.getInput(">? "));
+    public /*returns wantMore */boolean getAndRunCommand() {
+        String inp;
+        try {
+            inp = in.getInput(">? ");
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+        runCommand(inp);
+        return true;
     }
     public void runCommand(String cmd) {
         @Nullable MathSymbol sym = parseCmdOrPrintError(cmd);
