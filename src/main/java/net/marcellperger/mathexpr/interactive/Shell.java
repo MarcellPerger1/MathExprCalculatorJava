@@ -5,13 +5,9 @@ import net.marcellperger.mathexpr.parser.ExprParseException;
 import net.marcellperger.mathexpr.parser.Parser;
 import net.marcellperger.mathexpr.util.Input;
 import net.marcellperger.mathexpr.util.MathUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
-import java.util.Arrays;
-
-import static net.marcellperger.mathexpr.util.Input.input;
 
 public class Shell {
     Input in;
@@ -27,7 +23,6 @@ public class Shell {
     }
 
     // TODO run() until exit better - parse exit command/Ctrl+C
-    // TODO fails badly with unchecked exception on parsing `12 + (`
 
     public void run() {
         //noinspection InfiniteLoopStatement

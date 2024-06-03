@@ -53,7 +53,7 @@ public class Parser {
 
     public @NotNull MathSymbol parseParensOrLiteral() throws ExprParseException {
         discardWhitespace();
-        return peek() == '(' ? parseParens() : parseDoubleLiteral();
+        return peekExpect() == '(' ? parseParens() : parseDoubleLiteral();
     }
 
     public MathSymbol parseParens() throws ExprParseException {
@@ -115,21 +115,35 @@ public class Parser {
         return CharBuffer.wrap(src, idx, src.length());
     }
 
-    boolean notEof() {
+    public boolean notEof() {
         return idx < src.length();
     }
-    boolean isEof() {
+    public boolean isEof() {
         return idx >= src.length();
     }
 
-    char peek() {
+    protected char peekAssert() {
         return src.charAt(idx);
     }
-    char advance() {
+    protected char peekExpect() throws ExprParseEofException {
+        if(isEof()) throw new ExprParseEofException("Unexpected end of input");
+        return src.charAt(idx);
+    }
+    protected char advanceAssert() {
         return src.charAt(idx++);
     }
-    boolean advanceIf(@NotNull Function<Character, Boolean> predicate) {
-        boolean doAdvance = predicate.apply(peek());
+    protected char advanceExpect() throws ExprParseEofException {
+        if(isEof()) throw new ExprParseEofException("Unexpected end of input");
+        return src.charAt(idx++);
+    }
+    @SuppressWarnings("unused")
+    protected boolean advanceIf(@NotNull Function<Character, Boolean> predicate) throws ExprParseEofException {
+        boolean doAdvance = predicate.apply(peekExpect());
+        if(doAdvance) ++idx;
+        return doAdvance;
+    }
+    protected boolean advanceIfAssert(@NotNull Function<Character, Boolean> predicate) {
+        boolean doAdvance = predicate.apply(peekAssert());
         if(doAdvance) ++idx;
         return doAdvance;
     }
@@ -140,7 +154,7 @@ public class Parser {
      */
     protected int advanceWhile(@NotNull Function<Character, Boolean> predicate) {
         int n = 0;
-        while (notEof() && advanceIf(predicate)) ++n;
+        while (notEof() && advanceIfAssert(predicate)) ++n;
         return n;
     }
 
@@ -153,7 +167,7 @@ public class Parser {
     }
 
     protected void advanceExpectNext(char expected) throws ExprParseException {
-        char actual = advance();
+        char actual = advanceExpect();
         if(actual != expected) throw new ExprParseException("Expected '%c', got '%c'".formatted(expected, actual));
     }
     protected void advanceExpectNext_ignoreWs(char expected) throws ExprParseException {
