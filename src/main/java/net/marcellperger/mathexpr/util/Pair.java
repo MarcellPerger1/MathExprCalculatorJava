@@ -1,5 +1,6 @@
 package net.marcellperger.mathexpr.util;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
@@ -11,6 +12,12 @@ public class Pair<T, U> {
     public Pair(T left, U right) {
         this.left = left;
         this.right = right;
+    }
+
+    @Contract("_ -> new")
+    public static <T> @NotNull Pair<T, T> ofArray(T @NotNull [] values) {
+        if(values.length != 2) throw new IllegalArgumentException("Pair.ofArray should be passed an array of 2 items");
+        return new Pair<>(values[0], values[1]);
     }
 
     /**

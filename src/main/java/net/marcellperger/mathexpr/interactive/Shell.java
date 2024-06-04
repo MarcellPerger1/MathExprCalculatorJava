@@ -1,18 +1,16 @@
 package net.marcellperger.mathexpr.interactive;
 
-import net.marcellperger.mathexpr.MathSymbol;
-import net.marcellperger.mathexpr.parser.ExprParseException;
-import net.marcellperger.mathexpr.parser.Parser;
 import net.marcellperger.mathexpr.util.Input;
-import net.marcellperger.mathexpr.util.MathUtil;
-import org.jetbrains.annotations.Nullable;
+import net.marcellperger.mathexpr.util.InputClosedException;
+import net.marcellperger.mathexpr.util.Pair;
+import net.marcellperger.mathexpr.util.UnreachableError;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
-import java.util.NoSuchElementException;
 
 public class Shell {
-    Input in;
-    PrintStream out;
+    public Input in;
+    public PrintStream out;
 
     public Shell() {
         in = new Input();
@@ -23,37 +21,55 @@ public class Shell {
         new Shell().run();
     }
 
-    // TODO run() until exit better - parse exit command, more robust/extensible command handling system
-
     public void run() {
+        displayStartupMessage();
         //noinspection StatementWithEmptyBody
         while (getAndRunCommand()) {}
+    }
+
+    public void displayStartupMessage() {
+        out.println("MathExpr console v0.1.0-alpha.1 (type \"!exit\" to exit).");
+    }
+
+    // TODO should this really be in the Shell class? - SOLID and all that
+    /**
+     * Splits {@code cmd} into command and arguments
+     */
+    @NotNull Pair<@NotNull String, @NotNull String> splitCommand(@NotNull String cmd) {
+        String[] words = cmd.split("\\s+", 2);
+        return switch (words.length) {
+            case 0 -> new Pair<>("", "");
+            case 1 -> new Pair<>(words[0], "");
+            case 2 -> new Pair<>(words[0], words[1]);
+            default -> throw new UnreachableError();
+        };
+    }
+    @NotNull String getCommandName(String cmd) {
+        return splitCommand(cmd).left;
     }
 
     public /*returns wantMore */boolean getAndRunCommand() {
         String inp;
         try {
             inp = in.getInput(">? ");
-        } catch (NoSuchElementException e) {
+        } catch (InputClosedException e) {
             return false;
         }
-        runCommand(inp);
-        return true;
+        // This .strip() is surprisingly important - it allows the .split("\\s") to work properly
+        return runCommand(inp.strip());
     }
-    public void runCommand(String cmd) {
-        @Nullable MathSymbol sym = parseCmdOrPrintError(cmd);
-        if(sym == null) return;
-        double value = sym.calculateValue();
-        out.println(MathUtil.roundToSigFigs(value, 10));
+
+    public boolean runCommand(String cmd) {
+        return getHandler(cmd).run(cmd, this);
     }
-    public @Nullable MathSymbol parseCmdOrPrintError(String cmd) {
-        // No special commands so pass straight to parser
-        Parser p = new Parser(cmd);
-        try {
-            return p.parse();
-        } catch (ExprParseException exc) {
-            out.println(exc);
-            return null;
-        }
+
+    public ShellCommandHandler getHandler(String cmd) {
+        // (There will be more...)
+        //noinspection SwitchStatementWithTooFewBranches
+        return switch (getCommandName(cmd)) {
+            case "!exit" -> new ExitCommandHandler();
+            default -> new MathCommandHandler();
+        };
     }
+
 }
