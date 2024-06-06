@@ -1,5 +1,7 @@
 package net.marcellperger.mathexpr.cli.minicli;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 public class StringCLIOption extends CLIOption<String> {
@@ -8,7 +10,7 @@ public class StringCLIOption extends CLIOption<String> {
     }
 
     @Override
-    public void setValueFromString(String s) {
+    protected void _setValueFromString(@Nullable String s) {
         setValue(s);
     }
 }

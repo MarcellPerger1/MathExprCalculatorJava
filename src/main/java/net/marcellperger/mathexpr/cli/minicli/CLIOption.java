@@ -1,8 +1,10 @@
 package net.marcellperger.mathexpr.cli.minicli;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public abstract class CLIOption<T> {
     List<String> names;
@@ -25,7 +27,23 @@ public abstract class CLIOption<T> {
         this.value = value;
     }
 
-    public abstract void setValueFromString(String s);
+    // Nullable because we need a way to distinguish `--foo=''` and `--foo`
+    protected abstract void _setValueFromString(@Nullable String s);
+    public void setValueFromString(@Nullable String s) {
+        getValueMode().validateHasValue(s == null);
+        _setValueFromString(s);
+    }
+
+    public OptionValueMode getValueMode() {
+        return OptionValueMode.REQUIRED;
+    }
+
+    /**
+     * @return True if it supports `-b arg`, False to make `-b arg` into `-b`,`arg`
+     */
+    public boolean supportsSeparateValueAfterShortForm() {
+        return getValueMode() != OptionValueMode.NONE;
+    }
 
     public void reset() {
         value = null;
