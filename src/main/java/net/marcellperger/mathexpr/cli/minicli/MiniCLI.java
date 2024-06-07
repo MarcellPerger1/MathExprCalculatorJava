@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class MiniCLI {
     Map<String, CLIOption<?>> options = new HashMap<>();
@@ -21,6 +22,16 @@ public class MiniCLI {
 
     @Contract("_ -> new")
     public CLIOption<String> addStringOption(String @NotNull ... names) {
+        return addOptionFromFactory(names, StringCLIOption::new);
+    }
+    @Contract("_ -> new")
+    public CLIOption<Boolean> addBooleanOption(String @NotNull ... names) {
+        return addOptionFromFactory(names, BooleanCLIOption::new);
+    }
+
+    protected <T> CLIOption<T> addOptionFromFactory(
+            String @NotNull[] names,
+            Function<? super List<String>, ? extends CLIOption<T>> optionFactory) {
         // First validate all of them so we don't mutate unless all are valid
         for(String name : names) {
             if (!name.startsWith("-")) throw new IllegalArgumentException("Option name must start with '-'");
@@ -28,7 +39,7 @@ public class MiniCLI {
                 throw new IllegalStateException("Argument '%s' has already been registered".formatted(name));
             }
         }
-        CLIOption<String> opt = new StringCLIOption(List.of(names));
+        CLIOption<T> opt = optionFactory.apply(List.of(names));
         for(String name : names) {
             options.put(name, opt);
         }
