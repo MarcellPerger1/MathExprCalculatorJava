@@ -108,17 +108,6 @@ public class Util {
         if(!cond) throw new AssertionError("Assertion failed in expectOrFail");
     }
 
-//    @Contract("_, _ -> param1")
-//    public static<T> T expectOrFail(T value, @NotNull Predicate<T> predicate, ) {
-//        if(!predicate.test(value)) throw new AssertionError("Assertion failed in expectOrFail");
-//        return value;
-//    }
-//    @Contract("_, true -> param1; _, false -> fail")
-//    public static<T> T expectOrFail(T value, boolean cond) {
-//        if(!cond) throw new AssertionError("Assertion failed in expectOrFail");
-//        return value;
-//    }
-
     @Contract("_, _ -> param1")
     public static<T extends Throwable> @NotNull T withCause(@NotNull T exc, @Nullable Throwable cause) {
         if(cause != null) exc.initCause(cause);

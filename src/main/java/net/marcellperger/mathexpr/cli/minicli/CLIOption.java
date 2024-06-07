@@ -1,10 +1,8 @@
 package net.marcellperger.mathexpr.cli.minicli;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 public abstract class CLIOption<T> {
     List<String> names;
