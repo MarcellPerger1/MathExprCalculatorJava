@@ -60,8 +60,12 @@ public class MiniCLI {
         }
 
         public void parse() {
+            pumpAllArgs();
+            finish();
+        }
+
+        public void pumpAllArgs() {
             args.forEach(this::pumpSingleArg);
-            // TODO: finalize: check prev, handle if not null
         }
 
         // Make this public as it could be useful for making stream-ing type stuff
@@ -74,16 +78,12 @@ public class MiniCLI {
             }
             switch (argT) {
                 case NORMAL -> {
-                    if (prev == null) positionalArgs.add(arg);
-                    else flushPrevWithValue(arg);
+                    if (prev != null) flushPrevWithValue(arg);
+                    else positionalArgs.add(arg);
                 }
                 case SINGLE -> {
                     if(prev != null) flushPrev();
-                    if(arg.contains("=")) {
-                        Pair<String, String> kv = Pair.ofArray(arg.split("=", 2));
-                        CLIOption<?> opt = lookupOption(kv.left);
-                        opt.setValueFromString(kv.right);
-                    } else {
+                    if(!setFromKeyEqualsValue(arg)) {
                         prev = lookupOption(arg);
                         // flush immediately if next one cannot be a value
                         if(!prev.supportsSeparateValueAfterShortForm()) flushPrev();
@@ -91,11 +91,26 @@ public class MiniCLI {
                 }
                 case DOUBLE -> {
                     if(prev != null) flushPrev();
-
-                    // TODO lookup here
-                    prev = null;
+                    if(!setFromKeyEqualsValue(arg)) {
+                        lookupOption(arg).setValueFromString(null);
+                    }
                 }
             }
+        }
+
+        public void finish() {
+            if(prev != null) flushPrev();
+        }
+
+        // Makes more logical sense reading the code
+        // (`if (![did]setFromKeyEqualValue(arg)) {...}` )
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+        private boolean /*return success?*/ setFromKeyEqualsValue(String arg) {
+            if(!arg.contains("=")) return false;
+            Pair<String, String> kv = Pair.ofArray(arg.split("=", 2));
+            CLIOption<?> opt = lookupOption(kv.left);
+            opt.setValueFromString(kv.right);
+            return true;
         }
 
         private void flushPrev() {
@@ -107,9 +122,6 @@ public class MiniCLI {
             prev.setValueFromString(value);
             prev = null;
         }
-    }
-    private record PrevState(CLIOption<?> option, @Nullable String value) {
-
     }
     private enum ArgType {
         NORMAL, SINGLE, DOUBLE;
