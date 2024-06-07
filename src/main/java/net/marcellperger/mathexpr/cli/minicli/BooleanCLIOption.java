@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class BooleanCLIOption extends CLIOption<Boolean> {
+class BooleanCLIOption extends CLIOption<Boolean> {
     public BooleanCLIOption(List<String> optionNames) {
         super(Boolean.class, optionNames);
     }

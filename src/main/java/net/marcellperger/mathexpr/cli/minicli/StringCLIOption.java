@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class StringCLIOption extends CLIOption<String> {
+class StringCLIOption extends CLIOption<String> {
     public StringCLIOption(List<String> keys) {
         super(String.class, keys);
     }

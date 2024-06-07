@@ -1,5 +1,7 @@
 package net.marcellperger.mathexpr.cli.minicli;
 
+import net.marcellperger.mathexpr.IntRange;
+import net.marcellperger.mathexpr.UIntRange;
 import net.marcellperger.mathexpr.util.Pair;
 import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.Contract;
@@ -10,14 +12,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class MiniCLI {
     Map<String, CLIOption<?>> options = new HashMap<>();
+    UIntRange nPositionalArgs = new UIntRange();
     List<String> positionalArgs = new ArrayList<>();
 
     public MiniCLI() {
 
+    }
+
+    public void setPositionalArgCount(UIntRange range) {
+        nPositionalArgs = range;
+    }
+    public void setPositionalArgCount(@Nullable Integer min, @Nullable Integer max) {
+        setPositionalArgCount(new UIntRange(min, max));
+    }
+    public void setPositionalArgCount(@Nullable /*null=any*/ Integer value) {
+        if(value == null) setPositionalArgCount(new UIntRange());
+        else setPositionalArgCount(value, value);
     }
 
     @Contract("_ -> new")
@@ -89,7 +104,7 @@ public class MiniCLI {
             switch (argT) {
                 case NORMAL -> {
                     if (prev != null) flushPrevWithValue(arg);
-                    else positionalArgs.add(arg);
+                    else addPositionalArg(arg);
                 }
                 case SINGLE -> {
                     if(prev != null) flushPrev();
@@ -131,6 +146,13 @@ public class MiniCLI {
             Util.realAssert(prev != null, "flushPrevWithValue must have a `prev` to flush");
             prev.setValueFromString(value);
             prev = null;
+        }
+
+        private void addPositionalArg(String arg) {
+            int newSize = positionalArgs.size() + 1;
+            int maxArgc = nPositionalArgs.getMax();
+            if(newSize > maxArgc)
+                throw new CLIParseException("Too many positional args (expected max %d, got %d)".formatted(maxArgc, newSize));
         }
     }
     private enum ArgType {
