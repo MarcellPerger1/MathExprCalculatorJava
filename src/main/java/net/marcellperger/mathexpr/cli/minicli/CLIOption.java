@@ -59,7 +59,7 @@ public abstract class CLIOption<T> {
     // Nullable because we need a way to distinguish `--foo=''` and `--foo`
     protected abstract void _setValueFromString(@Nullable String s);
     public void setValueFromString(@Nullable String s) {
-        getValueMode().validateHasValue(s == null);
+        getValueMode().validateHasValue(s != null);
         _setValueFromString(s);
     }
 
