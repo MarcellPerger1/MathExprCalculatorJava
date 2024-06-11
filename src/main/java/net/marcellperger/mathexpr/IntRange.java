@@ -30,4 +30,9 @@ public class IntRange {
     public boolean includes(int v) {
         return lo <= v && v <= hi;
     }
+
+    public String fancyRepr() {
+        if(lo == hi) return "exactly %d".formatted(lo);
+        return "%d to %d".formatted(lo, hi);
+    }
 }

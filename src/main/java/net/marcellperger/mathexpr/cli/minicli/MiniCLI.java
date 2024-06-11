@@ -1,6 +1,5 @@
 package net.marcellperger.mathexpr.cli.minicli;
 
-import net.marcellperger.mathexpr.IntRange;
 import net.marcellperger.mathexpr.UIntRange;
 import net.marcellperger.mathexpr.util.Pair;
 import net.marcellperger.mathexpr.util.Util;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 public class MiniCLI {
@@ -124,7 +122,11 @@ public class MiniCLI {
         }
 
         public void finish() {
-            if(prev != null) flushPrev();
+            if(prev != null) flushPrev();  // TODO handle required kw-args
+            int nArgs = positionalArgs.size();
+            if(!nPositionalArgs.includes(nArgs))
+                throw new CLIParseException("Incorrect number of positional args (required %s, got %d)"
+                    .formatted(nPositionalArgs.fancyRepr(), nArgs));
         }
 
         // Makes more logical sense reading the code
@@ -153,6 +155,7 @@ public class MiniCLI {
             int maxArgc = nPositionalArgs.getMax();
             if(newSize > maxArgc)
                 throw new CLIParseException("Too many positional args (expected max %d, got %d)".formatted(maxArgc, newSize));
+            positionalArgs.add(arg);
         }
     }
     private enum ArgType {
