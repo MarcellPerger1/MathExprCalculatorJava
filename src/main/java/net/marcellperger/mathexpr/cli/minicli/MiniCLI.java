@@ -7,14 +7,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public class MiniCLI {
     Map<String, CLIOption<?>> options = new HashMap<>();
+    Set<CLIOption<?>> optionSet = new HashSet<>();
     UIntRange nPositionalArgs = new UIntRange();
     List<String> positionalArgs = new ArrayList<>();
 
@@ -53,6 +51,7 @@ public class MiniCLI {
             }
         }
         CLIOption<T> opt = optionFactory.apply(List.of(names));
+        optionSet.add(opt);
         for(String name : names) {
             options.put(name, opt);
         }
@@ -92,7 +91,7 @@ public class MiniCLI {
         }
 
         // Make this public as it could be useful for making stream-ing type stuff
-        public void pumpSingleArg(String arg) {
+        public void pumpSingleArg(@NotNull String arg) {
             ArgType argT = ArgType.fromArg(arg);
             if(prev != null && prev.getValueMode() == OptionValueMode.REQUIRED) {
                 // We NEED a value so force it, even if it looks like a flag
@@ -122,11 +121,12 @@ public class MiniCLI {
         }
 
         public void finish() {
-            if(prev != null) flushPrev();  // TODO handle required kw-args
+            if(prev != null) flushPrev();
             int nArgs = positionalArgs.size();
             if(!nPositionalArgs.includes(nArgs))
                 throw new CLIParseException("Incorrect number of positional args (required %s, got %d)"
                     .formatted(nPositionalArgs.fancyRepr(), nArgs));
+            optionSet.forEach(CLIOption::finish);  // Handle options
         }
 
         // Makes more logical sense reading the code

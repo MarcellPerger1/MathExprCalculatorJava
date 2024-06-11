@@ -7,6 +7,7 @@ import java.util.List;
 class BooleanCLIOption extends CLIOption<Boolean> {
     public BooleanCLIOption(List<String> optionNames) {
         super(Boolean.class, optionNames);
+        setDefault(false);
     }
 
     @Override
