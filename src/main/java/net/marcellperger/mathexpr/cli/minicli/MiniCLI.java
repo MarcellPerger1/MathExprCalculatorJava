@@ -142,6 +142,7 @@ public class MiniCLI {
 
         private void flushPrev() {
             Util.realAssert(prev != null, "flushPrev must have a `prev` to flush");
+            prev.setValueFromString(null);
             prev = null;
         }
         private void flushPrevWithValue(String value) {

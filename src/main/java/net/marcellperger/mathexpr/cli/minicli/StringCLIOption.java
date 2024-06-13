@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 class StringCLIOption extends CLIOption<String> {
-    @Nullable String defaultIfNoValue;
+    @Nullable String defaultIfNoValue;  // TODO should this really be here - makes more sense in CLIOption
 
     public StringCLIOption(List<String> keys, @Nullable String defaultIfNoValue) {
         super(String.class, keys);
