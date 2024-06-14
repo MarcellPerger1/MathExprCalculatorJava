@@ -227,6 +227,54 @@ class OptionTest {
         assertNull(exc.getCause(), "Expected no cause for Option.expect()");
     }
 
+    @SuppressWarnings("unused")
+    static class MyCustomException extends RuntimeException {
+        public MyCustomException() {}
+        public MyCustomException(String message) {
+            super(message);
+        }
+        public MyCustomException(String message, Throwable cause) {
+            super(message, cause);
+        }
+        public MyCustomException(Throwable cause) {
+            super(cause);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    static class MyCustomCheckedException extends RuntimeException {
+        public MyCustomCheckedException() {}
+        public MyCustomCheckedException(String message) {
+            super(message);
+        }
+        public MyCustomCheckedException(String message, Throwable cause) {
+            super(message, cause);
+        }
+        public MyCustomCheckedException(Throwable cause) {
+            super(cause);
+        }
+    }
+
+    @Test
+    void expect_exc() {
+        {
+            MyCustomException actualExc = new MyCustomException("unchecked exc");
+            assertEquals(314, assertDoesNotThrow(() -> getSome().expect(actualExc)));
+            Option<Integer> err = getNone();
+            MyCustomException exc = assertThrows(
+                MyCustomException.class, () -> err.expect(actualExc));
+            assertEquals(exc, actualExc);
+        }
+        {
+            MyCustomCheckedException actualExc = new MyCustomCheckedException("checked exc");
+            assertEquals(314, assertDoesNotThrow(() -> getSome().expect(actualExc)));
+            Option<Integer> err = getNone();
+            MyCustomCheckedException exc = assertThrows(
+                MyCustomCheckedException.class, () -> err.expect(actualExc));
+            assertEquals(exc, actualExc);
+        }
+    }
+
     @Test
     void unwrap() {
         assertEquals(314, assertDoesNotThrow(() -> getSome().unwrap()));

@@ -1,5 +1,6 @@
 package net.marcellperger.mathexpr.util.rs;
 
+import net.marcellperger.mathexpr.util.ThrowingSupplier;
 import net.marcellperger.mathexpr.util.Util;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -142,6 +143,12 @@ public sealed interface Option<T> extends Iterable<T> {
         return unwrapOrElse(() -> {
             throw new OptionPanicException(msg);
         });
+    }
+    default <E extends Throwable> T expect(E excIfNone) throws E {
+        return switch (this) {
+            case None() -> throw excIfNone;
+            case Some(T value) -> value;
+        };
     }
     default T unwrap() {
         return expect("Option.unwrap() got None value");
