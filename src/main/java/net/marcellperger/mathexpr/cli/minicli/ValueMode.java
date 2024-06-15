@@ -3,7 +3,7 @@ package net.marcellperger.mathexpr.cli.minicli;
 /**
  * Controls if a value is required for an option
  */
-public enum OptionValueMode {
+public enum ValueMode {
     /**
      * Specifying a value is not allowed (e.g. {@code --foo} is allowed, {@code --foo=76} is not)
      */

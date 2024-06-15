@@ -1,6 +1,6 @@
 package net.marcellperger.mathexpr.cli.minicli;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -8,14 +8,15 @@ class BooleanCLIOption extends CLIOption<Boolean> {
     public BooleanCLIOption(List<String> optionNames) {
         super(Boolean.class, optionNames);
         setDefault(false);
+        setDefaultIfNoValue(true);
+        setValueMode(ValueMode.OPTIONAL);
     }
 
     @Override
-    protected void _setValueFromString(@Nullable String s) {
-        if(s == null) setValue(true);
-        else setValue(switch (s.strip().toLowerCase()) {
+    protected void _setValueFromString(@NotNull String s) {
+        setValue(switch (s.strip().toLowerCase()) {
             case "0", "no", "false" -> false;
-            case "", "1", "yes", "true" -> true;
+            case "1", "yes", "true" -> true;
             case String s2 -> throw new CLIParseException("Bad boolean value '" + s2 + "'");
         });
     }
@@ -23,10 +24,5 @@ class BooleanCLIOption extends CLIOption<Boolean> {
     @Override
     public boolean supportsSeparateValueAfterShortForm() {
         return false;  // cannot have `foo -r no` (use `-r=no` / `--long-form=no`
-    }
-
-    @Override
-    public OptionValueMode getValueMode() {
-        return OptionValueMode.OPTIONAL;
     }
 }

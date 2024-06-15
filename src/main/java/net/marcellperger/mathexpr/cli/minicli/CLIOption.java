@@ -1,76 +1,121 @@
 package net.marcellperger.mathexpr.cli.minicli;
 
+import net.marcellperger.mathexpr.util.Util;
+import net.marcellperger.mathexpr.util.rs.Option;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public abstract class CLIOption<T> {
-    List<String> names;
     Class<T> type;
+    List<String> names;
+    @NotNull Option<ValueMode> valueMode = Option.newNone();
+    @NotNull Option<T> defaultIfNoValue = Option.newNone();
+    @NotNull Option<T> defaultIfAbsent = Option.newNone();
     T value;
-    boolean isRequired;
-    @Nullable T defaultIfAbsent;
+    boolean hasValue;
 
     public CLIOption(Class<T> valueType, List<String> optionNames) {
         names = optionNames;
         type = valueType;
     }
 
-    @Contract("_ -> this")
-    public CLIOption<T> setRequired(boolean required) {
-        isRequired = required;
+    @Contract(" -> this")
+    public CLIOption<T> setRequired() {
+        defaultIfAbsent = Option.newNone();
         return this;
     }
     @Contract("_ -> this")
-    public CLIOption<T> setDefault(T defaultIfAbsent) {
-        this.defaultIfAbsent = defaultIfAbsent;
+    public CLIOption<T> setDefault(T defaultIfAbsent_) {
+        defaultIfAbsent = Option.newSome(defaultIfAbsent_);
         return this;
     }
     @Contract("_ -> this")
-    public CLIOption<T> setDefaultNoValue(T defaultIfNoValue) {
-        throw new UnsupportedOperationException("CLIOption<T>.setDefaultValue");
+    public CLIOption<T> setDefaultIfNoValue(T defaultIfNoValue_) {
+        defaultIfNoValue = Option.newSome(defaultIfNoValue_);
+        return this;
     }
-
-    // TODO default value!
+    public boolean isRequired() {
+        return defaultIfAbsent.isNone();
+    }
 
     public List<String> getNames() {
         return names;
     }
 
     public T getValue() {
+        Util.realAssert(hasValue, "value should've been set before getValue() is called");
         return value;
     }
 
+    public void begin() {
+        switch (getValueMode()) {
+            case OPTIONAL, NONE -> defaultIfNoValue.expect(
+                new IllegalStateException("defaultIfNoValue must be provided for OPTIONAL/NONE valueModes"));
+            case REQUIRED -> {
+                if (defaultIfNoValue.isSome()) {
+                    throw new IllegalStateException("defaultIfNoValue should not be specified with a REQUIRED valueMode");
+                }
+            }
+        }
+    }
     public void finish() {
-        if(value != null) return;  // All good
-        if(isRequired) throw new CLIParseException("This argument is required");  // TODO detail!
-        value = defaultIfAbsent;
+        if (!hasValue)
+            setValue(defaultIfAbsent.expect(new CLIParseException("This argument is required")));  // TODO detail!
     }
 
-    public void setValue(@Nullable T value) {
-        this.value = value;
+    public void setValue(T value_) {
+        value = value_;
+        hasValue = true;
     }
 
     // Nullable because we need a way to distinguish `--foo=''` and `--foo`
-    protected abstract void _setValueFromString(@Nullable String s);
+    protected abstract void _setValueFromString(@NotNull String s);
     public void setValueFromString(@Nullable String s) {
-        getValueMode().validateHasValue(s != null);
-        _setValueFromString(s);
+        if(s == null) setValueFromNoValue();
+        else setValueFromString_hasValue(s);
     }
 
-    public OptionValueMode getValueMode() {
-        return OptionValueMode.REQUIRED;
+    public void setValueFromString_hasValue(@NotNull String s) {
+        Objects.requireNonNull(s);
+        getValueMode().validateHasValue(true);
+        _setValueFromString(s);
+    }
+    public void setValueFromNoValue() {
+        getValueMode().validateHasValue(false);
+        setValue(_expectGetDefaultIfNoValue());
+    }
+    protected T _expectGetDefaultIfNoValue() {
+        return defaultIfNoValue.expect(new CLIParseException("This argument requires a value"));
+    }
+
+    public ValueMode getDefaultValueMode() {
+        return ValueMode.REQUIRED;
+    }
+    public ValueMode getValueMode() {
+        return valueMode.unwrapOr(getDefaultValueMode());
+    }
+    public Option<ValueMode> getDeclaredValueMode() {
+        return valueMode;
+    }
+    @Contract("_ -> this")
+    public CLIOption<T> setValueMode(ValueMode mode) {
+        valueMode = Option.newSome(mode);
+        return this;
     }
 
     /**
      * @return True if it supports `-b arg`, False to make `-b arg` into `-b`,`arg`
      */
     public boolean supportsSeparateValueAfterShortForm() {
-        return getValueMode() != OptionValueMode.NONE;
+        return getValueMode() != ValueMode.NONE;
     }
 
     public void reset() {
         value = null;
+        hasValue = false;
     }
 }

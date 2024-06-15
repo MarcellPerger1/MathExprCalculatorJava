@@ -58,6 +58,17 @@ public class MiniCLI {
         return opt;
     }
 
+    public void reset() {
+        positionalArgs.clear();
+        optionSet.forEach(CLIOption::reset);
+    }
+
+    // TODO support `--`
+
+    // TODO better positional arg handling (just dumping an array on the user is a bit meh)
+    public List<String> getPositionalArgs() {
+        return positionalArgs;
+    }
 
     @Contract("_ -> this")
     public MiniCLI parseArgs(String[] args) {
@@ -65,6 +76,7 @@ public class MiniCLI {
     }
     @Contract("_ -> this")
     public MiniCLI parseArgs(List<String> args) {
+        reset();
         new Parser(args).parse();
         return this;
     }
@@ -82,6 +94,7 @@ public class MiniCLI {
         }
 
         public void parse() {
+            begin();
             pumpAllArgs();
             finish();
         }
@@ -93,7 +106,7 @@ public class MiniCLI {
         // Make this public as it could be useful for making stream-ing type stuff
         public void pumpSingleArg(@NotNull String arg) {
             ArgType argT = ArgType.fromArg(arg);
-            if(prev != null && prev.getValueMode() == OptionValueMode.REQUIRED) {
+            if(prev != null && prev.getValueMode() == ValueMode.REQUIRED) {
                 // We NEED a value so force it, even if it looks like a flag
                 flushPrevWithValue(arg);
                 return;
@@ -118,6 +131,10 @@ public class MiniCLI {
                     }
                 }
             }
+        }
+
+        public void begin() {
+            optionSet.forEach(CLIOption::begin);
         }
 
         public void finish() {
