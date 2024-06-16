@@ -17,7 +17,7 @@ class BooleanCLIOption extends CLIOption<Boolean> {
         setValue(switch (s.strip().toLowerCase()) {
             case "0", "no", "false" -> false;
             case "1", "yes", "true" -> true;
-            case String s2 -> throw new CLIParseException("Bad boolean value '" + s2 + "'");
+            case String s2 -> throw fmtNewParseExcWithName("Bad boolean value '%s' for %%s".formatted(s2));
         });
     }
 

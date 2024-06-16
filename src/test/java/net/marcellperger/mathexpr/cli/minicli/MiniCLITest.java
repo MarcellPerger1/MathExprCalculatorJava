@@ -72,9 +72,11 @@ class MiniCLITest {
             // TODO 2nd arg cannot be -8 here as it is interpreted as a flag so
             //  need to support `--` or need to see if this doesn't match any option
             //  (but then adding an option would be a breaking change)
+            assertThrowsAndMsgContains(CLIParseException.class, "-R/--round-sf option requires a value",
+                () -> cli.parseArgs(new String[]{"1+1", "-R"}));
             assertThrowsAndMsgContains(CLIParseException.class, "positional args",
                 () -> cli.parseArgs(new String[]{"1+2", "*8"}));
-            assertThrowsAndMsgContains(CLIParseException.class, "Bad boolean value",
+            assertThrowsAndMsgContains(CLIParseException.class, "Bad boolean value 'abc' for -i/--interactive",
                 () -> cli.parseArgs(new String[]{"--interactive=abc"}));
         }
     }
@@ -83,6 +85,6 @@ class MiniCLITest {
                                                           String containsMsg, Executable fn) {
         T exc = assertThrows(cls, fn);
         assertTrue(exc.getMessage().contains(containsMsg), () ->
-            "Expected error message ('%s') to contain %s".formatted(exc.getMessage(), containsMsg));
+            "Expected \"%s\" to contain \"%s\"".formatted(exc.getMessage(), containsMsg));
     }
 }

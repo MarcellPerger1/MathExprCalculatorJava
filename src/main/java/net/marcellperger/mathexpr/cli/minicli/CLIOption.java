@@ -23,6 +23,13 @@ public abstract class CLIOption<T> {
         type = valueType;
     }
 
+    public String getDisplayName() {
+        return names.isEmpty() ? "<unnamed option>" : String.join("/", names.toArray(String[]::new));
+    }
+    public CLIParseException fmtNewParseExcWithName(@NotNull String fmt) {
+        return new CLIParseException(fmt.formatted(getDisplayName()));
+    }
+
     @Contract(" -> this")
     public CLIOption<T> setRequired() {
         defaultIfAbsent = Option.newNone();
@@ -64,7 +71,7 @@ public abstract class CLIOption<T> {
     }
     public void finish() {
         if (!hasValue)
-            setValue(defaultIfAbsent.expect(new CLIParseException("This argument is required")));  // TODO detail!
+            setValue(defaultIfAbsent.expect(fmtNewParseExcWithName("The %s option is required")));
     }
 
     public void setValue(T value_) {
@@ -81,15 +88,15 @@ public abstract class CLIOption<T> {
 
     public void setValueFromString_hasValue(@NotNull String s) {
         Objects.requireNonNull(s);
-        getValueMode().validateHasValue(true);
+        getValueMode().validateHasValue(this, true);
         _setValueFromString(s);
     }
     public void setValueFromNoValue() {
-        getValueMode().validateHasValue(false);
+        getValueMode().validateHasValue(this, false);
         setValue(_expectGetDefaultIfNoValue());
     }
     protected T _expectGetDefaultIfNoValue() {
-        return defaultIfNoValue.expect(new CLIParseException("This argument requires a value"));
+        return defaultIfNoValue.expect(fmtNewParseExcWithName("The %s option requires a value"));
     }
 
     public ValueMode getDefaultValueMode() {

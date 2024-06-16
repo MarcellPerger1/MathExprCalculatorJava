@@ -17,14 +17,14 @@ public enum ValueMode {
      */
     REQUIRED,
     ;
-    public void validateHasValue(boolean hasValue) {
+    public void validateHasValue(CLIOption<?> opt, boolean hasValue) {
         switch (this) {
             case NONE -> {
-                if(hasValue) throw new CLIParseException("Specifying a value for this option is not allowed");
+                if(hasValue) throw opt.fmtNewParseExcWithName("Specifying a value for the %s option is not allowed");
             }
             case OPTIONAL -> {}
             case REQUIRED -> {
-                if(!hasValue) throw new CLIParseException("This option requires a value to be passed");
+                if(!hasValue) throw opt.fmtNewParseExcWithName("The %s option requires a value");
             }
         }
     }
