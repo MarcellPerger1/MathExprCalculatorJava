@@ -9,14 +9,23 @@ public class Shell {
     public Input in;
     public PrintStream out;
     ShellCommandParser commandParser;
+    int roundToSf;
 
     public Shell() {
+        this(12);
+    }
+    public Shell(int roundToSf) {
         in = new Input();
         out = System.out;
         commandParser = new ShellCommandParser(this);
+        this.roundToSf = roundToSf;
     }
 
     public static void main(String[] args) {
+        main();
+    }
+    @SuppressWarnings("ConfusingMainMethod")
+    public static void main() {
         new Shell().run();
     }
 
