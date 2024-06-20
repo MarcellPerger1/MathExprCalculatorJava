@@ -63,8 +63,6 @@ public class MiniCLI {
         optionSet.forEach(CLIOption::reset);
     }
 
-    // TODO support `--`
-
     // TODO better positional arg handling (just dumping an array on the user is a bit meh)
     public List<String> getPositionalArgs() {
         return positionalArgs;
@@ -86,7 +84,9 @@ public class MiniCLI {
         return out;
     }
     private class Parser {
+        // NOTE: Do not strip ANYTHING! - the shell does that for us and it also removes quotes
         @Nullable CLIOption<?> prev = null;
+        boolean finishedOptions = false;
         List<String> args;
 
         public Parser(List<String> args) {
@@ -105,6 +105,14 @@ public class MiniCLI {
 
         // Make this public as it could be useful for making stream-ing type stuff
         public void pumpSingleArg(@NotNull String arg) {
+            if(finishedOptions) {  // No more options so *must* be positional
+                addPositionalArg(arg);
+                return;
+            }
+            if(arg.equals("--")) {
+                finishedOptions = true;
+                return;
+            }
             ArgType argT = ArgType.fromArg(arg);
             if(prev != null && prev.getValueMode() == ValueMode.REQUIRED) {
                 // We NEED a value so force it, even if it looks like a flag
