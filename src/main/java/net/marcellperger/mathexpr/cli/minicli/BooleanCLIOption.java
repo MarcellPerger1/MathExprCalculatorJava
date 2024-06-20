@@ -9,7 +9,6 @@ class BooleanCLIOption extends CLIOption<Boolean> {
         super(Boolean.class, optionNames);
         setDefault(false);
         setDefaultIfNoValue(true);
-        setValueMode(ValueMode.OPTIONAL);
     }
 
     @Override

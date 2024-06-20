@@ -100,7 +100,7 @@ public abstract class CLIOption<T> {
     }
 
     public ValueMode getDefaultValueMode() {
-        return ValueMode.REQUIRED;
+        return defaultIfNoValue.isSome() ? ValueMode.OPTIONAL : ValueMode.REQUIRED;
     }
     public ValueMode getValueMode() {
         return valueMode.unwrapOr(getDefaultValueMode());

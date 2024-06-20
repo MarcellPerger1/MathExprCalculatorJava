@@ -13,9 +13,4 @@ class StringCLIOption extends CLIOption<String> {
     protected void _setValueFromString(@NotNull String s) {
         setValue(s);
     }
-
-    @Override
-    public ValueMode getDefaultValueMode() {
-        return defaultIfNoValue.isNone() ? ValueMode.REQUIRED : ValueMode.OPTIONAL;
-    }
 }
