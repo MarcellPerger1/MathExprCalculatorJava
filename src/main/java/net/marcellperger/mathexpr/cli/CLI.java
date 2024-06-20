@@ -15,6 +15,7 @@ public class CLI {
     MiniCLI cli;
     CLIOption<Boolean> interactive;
     CLIOption<String> rounding;
+    Integer roundSf;
 
     public CLI() {
         cli = new MiniCLI();
@@ -30,16 +31,19 @@ public class CLI {
             System.err.println("Invalid CLI arguments: " + exc);
         }
     }
-    public void _run(String[] args) {
+    protected void _run(String[] args) {
+        parseArgs(args);
+        if(interactive.getValue() || cli.getPositionalArgs().isEmpty()) runInteractive(roundSf);
+        else runEvaluateExpr(roundSf);
+    }
+
+    private void parseArgs(String[] args) {
         cli.parseArgs(args);
-        int roundSf;
         try {
             roundSf = Integer.parseInt(rounding.getValue());
         } catch (NumberFormatException e) {
             throw new CLIParseException(e);
         }
-        if(interactive.getValue()) runInteractive(roundSf);
-        else runEvaluateExpr(roundSf);
     }
 
     private void runEvaluateExpr(int roundSf) {
