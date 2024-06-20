@@ -111,6 +111,25 @@ class MiniCLITest {
         }
     }
 
+    @Test
+    void test_miniCli_options_notParsing() {
+        {
+            MiniCLI cli = new MiniCLI();
+            cli.addStringOption("--abc", "-a", "-b");
+            assertThrowsAndMsgContains(IllegalStateException.class, "already been registered",
+                () -> cli.addBooleanOption("--qwerty", "-a"));
+        }
+        {
+            MiniCLI cli = new MiniCLI();
+            assertThrowsAndMsgContains(IllegalStateException.class,
+                "defaultIfNoValue should not be specified with a REQUIRED valueMode",
+                () -> {
+                    cli.addStringOption("-a").setValueMode(ValueMode.REQUIRED).setDefaultIfNoValue("v");
+                    cli.validate();
+                });
+        }
+    }
+
     <T extends Throwable> void assertThrowsAndMsgContains(@SuppressWarnings("SameParameterValue") Class<T> cls,
                                                           String containsMsg, Executable fn) {
         T exc = assertThrows(cls, fn);

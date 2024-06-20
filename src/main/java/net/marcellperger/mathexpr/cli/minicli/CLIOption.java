@@ -58,7 +58,7 @@ public abstract class CLIOption<T> {
         return value;
     }
 
-    public void begin() {
+    public void validate() {
         switch (getValueMode()) {
             case OPTIONAL, NONE -> defaultIfNoValue.expect(
                 new IllegalStateException("defaultIfNoValue must be provided for OPTIONAL/NONE valueModes"));
@@ -68,6 +68,10 @@ public abstract class CLIOption<T> {
                 }
             }
         }
+    }
+
+    public void begin() {
+        validate();
     }
     public void finish() {
         if (!hasValue)

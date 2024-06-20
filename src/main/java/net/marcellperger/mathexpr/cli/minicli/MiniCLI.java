@@ -63,6 +63,10 @@ public class MiniCLI {
         optionSet.forEach(CLIOption::reset);
     }
 
+    public void validate() {
+        optionSet.forEach(CLIOption::validate);
+    }
+
     // TODO better positional arg handling (just dumping an array on the user is a bit meh)
     public List<String> getPositionalArgs() {
         return positionalArgs;
@@ -94,6 +98,7 @@ public class MiniCLI {
         }
 
         public void parse() {
+            validate();
             begin();
             pumpAllArgs();
             finish();
