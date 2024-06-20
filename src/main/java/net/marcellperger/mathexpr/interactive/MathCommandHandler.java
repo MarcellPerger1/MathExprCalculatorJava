@@ -12,7 +12,7 @@ public class MathCommandHandler implements ShellCommandHandler {
     public boolean run(String cmd, Shell sh) {
         try {
             MathSymbol sym = parseOrPrintError(cmd, sh);
-            sh.out.println(MathUtil.roundToSigFigs(sym.calculateValue(), 12));
+            sh.out.println(MathUtil.roundToSigFigs(sym.calculateValue(), sh.roundToSf));
         } catch (ControlFlowBreak _parseErrorAlreadyPrinted) {}
         return true;  // Always continue
     }

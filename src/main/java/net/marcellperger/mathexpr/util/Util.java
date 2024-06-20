@@ -6,7 +6,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.SequencedCollection;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -107,17 +113,6 @@ public class Util {
     public static void expectOrFail(boolean cond) {
         if(!cond) throw new AssertionError("Assertion failed in expectOrFail");
     }
-
-//    @Contract("_, _ -> param1")
-//    public static<T> T expectOrFail(T value, @NotNull Predicate<T> predicate, ) {
-//        if(!predicate.test(value)) throw new AssertionError("Assertion failed in expectOrFail");
-//        return value;
-//    }
-//    @Contract("_, true -> param1; _, false -> fail")
-//    public static<T> T expectOrFail(T value, boolean cond) {
-//        if(!cond) throw new AssertionError("Assertion failed in expectOrFail");
-//        return value;
-//    }
 
     @Contract("_, _ -> param1")
     public static<T extends Throwable> @NotNull T withCause(@NotNull T exc, @Nullable Throwable cause) {
